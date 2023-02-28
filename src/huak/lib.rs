@@ -1,3 +1,4 @@
+use std::{collections::HashMap, fs::File, path::PathBuf};
 
 /// An API used to interact with some Python project.
 pub trait PythonProject {
@@ -6,9 +7,8 @@ pub trait PythonProject {
     /// Get the Python project's dependencies.
     fn dependencies(&self) -> &HashMap<String, Vec<Package>>;
     /// Get a specific group of Python dependencies.
-    fn dependency_group(&self) -> &Vec<Pacakge>;
+    fn dependency_group(&self) -> &Vec<Package>;
 }
-
 
 /// A Python project can be anything from a script to automate some process to a
 /// production web application. Projects consist of Python source code and a
@@ -30,16 +30,16 @@ pub struct Project {
 
 /// A project type might indicate if a project is an application-like project or a
 /// library-like project.
+#[derive(Default, Eq, PartialEq)]
 pub enum ProjectType {
-    #[derive(Default)]
     /// Library-like projects are essentially anything that isn’t an application. An
     /// example would be a typical Python package distributed to PyPI.
+    #[default]
     Library,
     /// Application-like projects are projects intended to be distributed as an executed
     /// process. Examples would include web applications, automated scripts, etc..
     Application,
 }
-
 
 /// An API used to interact with some Python environment.
 pub trait PythonEnvironment {
@@ -63,9 +63,9 @@ pub trait PythonEnvironment {
     /// Remove a package from the site-packages directory.
     fn remove_package_from_site_packages(package: &Package);
     /// Get a package from the site-packages directory if it is already installed.
-    fn find_site_packages_package(name: str) -> &Package;
+    fn find_site_packages_package(name: str) -> Package;
     /// Get a package's dist info from the site-packages directory if it is there.
-    fn find_site_packages_dist_info(name: str) -> &DistInfo;
+    fn find_site_packages_dist_info(name: str) -> DistInfo;
     /// Check if the Python environment is isolated from any system site-packages
     /// directory.
     fn is_isolated(&self) -> &bool;
@@ -142,6 +142,13 @@ pub struct Package {
     distribution_info: Option<DistInfo>,
 }
 
+/// Core package metadata.
+/// https://packaging.python.org/en/latest/specifications/core-metadata/
+pub struct PackageMetadata;
+
+/// Tags used to indicate platform compatibility.
+/// https://packaging.python.org/en/latest/specifications/platform-compatibility-tags/
+pub enum PlatformTag {}
 
 /// Package distribtion info stored in the site-packages directory adjacent to the
 /// installed package artifact.
@@ -168,11 +175,10 @@ pub struct DistInfo {
     wheel_file: Option<File>,
 }
 
-
 /// Data about the some platform.
 pub struct Platform {
     /// The name of the platform.
     name: String,
     /// The default shell of the platform.
-    shell: todo(),
-};
+    shell: todo!(),
+}
