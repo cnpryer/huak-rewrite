@@ -2,6 +2,8 @@ use pep440_rs::Version;
 use pyproject_toml::PyProjectToml;
 use std::{collections::HashMap, fs::File, path::PathBuf};
 
+mod error;
+
 /// An API used to interact with some Python project.
 pub trait PythonProject {
     /// Get the Python project's metadata file.
