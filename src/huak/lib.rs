@@ -1,9 +1,11 @@
+use pep440_rs::Version;
+use pyproject_toml::PyProjectToml;
 use std::{collections::HashMap, fs::File, path::PathBuf};
 
 /// An API used to interact with some Python project.
 pub trait PythonProject {
     /// Get the Python project's metadata file.
-    fn metadata_file(&self) -> &PyProjectTOML;
+    fn metadata_file(&self) -> &PyProjectToml;
     /// Get the Python project's dependencies.
     fn dependencies(&self) -> &HashMap<String, Vec<Package>>;
     /// Get a specific group of Python dependencies.
@@ -23,7 +25,7 @@ pub struct Project {
     /// The absolute path to the root directory of the project.
     root: PathBuf,
     /// The project file containing metadata about the project.
-    metadata_file: PyProjectTOML,
+    metadata_file: PyProjectToml,
     /// Collections of packages the project depends on.
     dependencies: HashMap<String, Vec<Package>>,
 }
@@ -179,6 +181,124 @@ pub struct DistInfo {
 pub struct Platform {
     /// The name of the platform.
     name: String,
-    /// The default shell of the platform.
-    shell: todo!(),
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn project_from_directory() {
+        todo!()
+    }
+
+    #[test]
+    fn toml_from_path() {
+        todo!()
+    }
+
+    #[test]
+    fn toml_to_string() {
+        todo!()
+    }
+
+    #[test]
+    fn toml_dependency_list() {
+        todo!()
+    }
+
+    #[test]
+    fn toml_optional_dependency_list() {
+        todo!()
+    }
+
+    #[test]
+    fn toml_add_dependency() {
+        todo!()
+    }
+
+    #[test]
+    fn toml_add_optional_dependency() {
+        todo!()
+    }
+
+    #[test]
+    fn toml_remove_dependency() {
+        todo!()
+    }
+
+    #[test]
+    fn toml_remove_optional_dependency() {
+        todo!()
+    }
+
+    #[test]
+    fn environment_default() {
+        todo!()
+    }
+
+    #[test]
+    fn environment_from_directory() {
+        todo!()
+    }
+
+    #[test]
+    fn environment_executable_directory_name() {
+        todo!()
+    }
+
+    #[test]
+    fn environment_config() {
+        todo!()
+    }
+
+    #[test]
+    fn package_display_str() {
+        todo!()
+    }
+
+    #[test]
+    fn package_version_operator() {
+        todo!()
+    }
+
+    #[test]
+    fn package_from_str() {
+        todo!()
+    }
+
+    #[test]
+    fn package_version_operator_from_str() {
+        todo!()
+    }
+
+    #[test]
+    fn package_with_multiple_version_specifiers() {
+        todo!()
+    }
+
+    #[test]
+    fn package_platform_tags() {
+        todo!()
+    }
+
+    #[test]
+    fn package_core_metadata() {
+        todo!()
+    }
+
+    #[test]
+    fn package_dist_info() {
+        todo!()
+    }
+
+    #[test]
+    fn platform_shell_command() {
+        todo!()
+    }
+
+    #[test]
+    fn platform_python_search() {
+        todo!()
+    }
 }
