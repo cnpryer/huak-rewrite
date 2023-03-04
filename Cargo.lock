@@ -312,6 +312,7 @@ dependencies = [
  "pep440_rs",
  "pyproject-toml",
  "reqwest",
+ "tempfile",
  "thiserror",
  "toml_edit",
 ]
