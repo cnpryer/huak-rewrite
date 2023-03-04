@@ -6,8 +6,8 @@ mod error;
 
 /// An API used to interact with some Python project.
 pub trait PythonProject {
-    /// Get the Python project's metadata file.
-    fn metadata_file(&self) -> &PyProjectToml;
+    /// Get the Python project's pyproject.toml file.
+    fn pyproject_toml(&self) -> &PyProjectToml;
     /// Get the Python project's dependencies.
     fn dependencies(&self) -> &HashMap<String, Vec<Package>>;
     /// Get a specific group of Python dependencies.
@@ -16,18 +16,21 @@ pub trait PythonProject {
 
 /// A Python project can be anything from a script to automate some process to a
 /// production web application. Projects consist of Python source code and a
-/// project-marking metadata file. PEPs provide Python’s ecosystem with standardization
-/// and huak leverages them to do many things such as identify your project. See PEP
-/// 621. Projects could contain source code used for testing purposes in addition to
-/// the application or script source code. To huak, projects are essentially directory
-/// trees containing Python code and a pyproject.toml file.
+/// project-marking pyproject.toml file. PEPs provide Python’s ecosystem with
+/// standardization and huak leverages them to do many things such as identify your
+/// project. See PEP 621. Projects could contain source code used for testing purposes
+/// in addition to the application or script source code. To huak, projects are
+/// essentially directory trees containing Python code and a pyproject.toml file.
 pub struct Project {
     /// A value to indicate the type of the project (app, library, etc.).
     project_type: ProjectType,
+    /// Data about the project's layout.
+    project_layout: ProjectLayout,
     /// The absolute path to the root directory of the project.
     root: PathBuf,
-    /// The project file containing metadata about the project.
-    metadata_file: PyProjectToml,
+    /// The project's pyproject.toml file containing metadata about the project.
+    /// See https://peps.python.org/pep-0621/
+    pyproject_toml: PyProjectToml,
     /// Collections of packages the project depends on.
     dependencies: HashMap<String, Vec<Package>>,
 }
@@ -43,6 +46,15 @@ pub enum ProjectType {
     /// Application-like projects are projects intended to be distributed as an executed
     /// process. Examples would include web applications, automated scripts, etc..
     Application,
+}
+
+/// Data about the project's layout. The project layout includes the location of
+/// important files and directories.
+pub struct ProjectLayout {
+    /// The absolute path to the pyproject.toml file.
+    pyproject_toml_path: PathBuf,
+    /// The absolute path to the package directory root.
+    package_root: PathBuf,
 }
 
 /// An API used to interact with some Python environment.
@@ -191,6 +203,11 @@ mod tests {
 
     #[test]
     fn project_from_directory() {
+        todo!()
+    }
+
+    #[test]
+    fn project_bootstrap() {
         todo!()
     }
 
