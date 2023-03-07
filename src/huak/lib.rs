@@ -11,6 +11,8 @@ use std::{
 
 mod error;
 mod fs;
+mod git;
+mod operation;
 
 const DEFAULT_VENV_NAME: &str = ".venv";
 const DEFAULT_PYPROJECT_TOML_STR: &str = r#"[project]
