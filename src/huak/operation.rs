@@ -1,30 +1,29 @@
-use std::path::Path;
-
 ///! This module implements operations Huak is capable of running. Huak can make
 ///! operations on Python projects, Python environments, etc.
 ///! NOTE: This module implements behavior meant for the CLI, so data about the project
 ///        or environment is only modified on the system. This behavior may change in
 ///        the future.
 use crate::{error::HuakResult, Environment, Package, Project};
+use std::path::Path;
 
 /// Activate a Python virtual environment.
 pub fn activate_venv(env: Environment) -> HuakResult<()> {
     todo!()
 }
 
-/// Add a Python package as a dependency to a Python project.
-pub fn add_project_dependency(
-    dependency: Package,
+/// Add Python packages as a dependencies to a Python project.
+pub fn add_project_dependencies(
+    dependencies: &[Package],
     project: Project,
     env: Environment,
 ) -> HuakResult<()> {
     todo!()
 }
 
-/// Add a Python package as an optional dependency to a Python project.
-pub fn add_project_optional_dependency(
-    dependency: Package,
-    group: &str,
+/// Add Python packages as optional dependencies to a Python project.
+pub fn add_project_optional_dependencies(
+    dependencies: &[Package],
+    groups: &[&str],
     project: Project,
     env: Environment,
 ) -> HuakResult<()> {
@@ -56,9 +55,9 @@ pub fn install_project_dependencies(project: Project, env: Environment) -> HuakR
     todo!()
 }
 
-/// Install a group of a Python project's optional dependencies to an environment.
+/// Install groups of a Python project's optional dependencies to an environment.
 pub fn install_project_optional_dependencies(
-    group: &str,
+    groups: &[&str],
     project: Project,
     env: Environment,
 ) -> HuakResult<()> {
@@ -71,7 +70,7 @@ pub fn lint_project(project: Project, env: Environment) -> HuakResult<()> {
 }
 
 /// Fix any fixable lint issues found in the Python project's source code.
-pub fn lint_fix_project(project: Project, env: Environment) -> HuakResult<()> {
+pub fn fix_project_lints(project: Project, env: Environment) -> HuakResult<()> {
     todo!()
 }
 
@@ -91,8 +90,8 @@ pub fn create_new_app_project(root_path: impl AsRef<Path>) -> HuakResult<()> {
 }
 
 /// Remove a dependency from a Python project.
-pub fn remove_project_dependency(
-    dependency_name: &str,
+pub fn remove_project_dependencies(
+    dependency_names: &[&str],
     project: Project,
     env: Environment,
 ) -> HuakResult<()> {
@@ -100,9 +99,9 @@ pub fn remove_project_dependency(
 }
 
 /// Remove a dependency from a Python project.
-pub fn remove_project_optional_dependency(
-    dependency_name: &str,
-    group: &str,
+pub fn remove_project_optional_dependencies(
+    dependency_names: &[&str],
+    groups: &[&str],
     project: Project,
     env: Environment,
 ) -> HuakResult<()> {
@@ -115,7 +114,7 @@ pub fn run_command_str_with_context(command: &str, env: Environment) -> HuakResu
 }
 
 /// Run a command from within a Python project's context.
-pub fn run_command_list_with_context(command: &Vec<&str>, env: Environment) -> HuakResult<()> {
+pub fn run_command_list_with_context(command: &[&str], env: Environment) -> HuakResult<()> {
     todo!()
 }
 
@@ -140,12 +139,12 @@ mod tests {
     }
 
     #[test]
-    fn test_add_project_dependency() {
+    fn test_add_project_dependencies() {
         todo!()
     }
 
     #[test]
-    fn test_add_optional_project_dependency() {
+    fn test_add_optional_project_dependencies() {
         todo!()
     }
 
@@ -185,7 +184,7 @@ mod tests {
     }
 
     #[test]
-    fn test_lint_fix_project() {
+    fn test_fix_project_lints() {
         todo!()
     }
 
@@ -211,12 +210,12 @@ mod tests {
     }
 
     #[test]
-    fn test_remove_project_dependency() {
+    fn test_remove_project_dependencies() {
         todo!()
     }
 
     #[test]
-    fn test_remove_project_optional_dependency() {
+    fn test_remove_project_optional_dependencies() {
         todo!()
     }
 
