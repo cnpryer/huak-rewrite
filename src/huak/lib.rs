@@ -15,7 +15,7 @@ mod git;
 mod operation;
 
 const DEFAULT_VENV_NAME: &str = ".venv";
-const DEFAULT_PYPROJECT_TOML_STR: &str = r#"[project]
+const DEFAULT_PYPROJECT_TOML_CONTENTS: &str = r#"[project]
 name = ""
 version = "0.0.1"
 description = ""
@@ -29,6 +29,48 @@ build-backend = "hatchling.build"
 /// The resource directory found in the Huak repo used for testing purposes.
 pub(crate) fn test_resources_dir_path() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources")
+}
+
+/// An abstraction containing the project and environments Huak interacts with.
+pub struct Workspace<'a> {
+    /// A Python project part of the workspace.
+    project: Project,
+    /// Environments assigned to the workspace.
+    environments: HashMap<&'a str, Environment>,
+}
+
+impl Workspace<'_> {
+    /// Create a new workspace.
+    pub fn new() -> Workspace<'static> {
+        let mut environments = HashMap::new();
+        environments.insert("default", Environment::new());
+        Workspace {
+            project: Project::new(),
+            environments: environments,
+        }
+    }
+
+    /// Initialize a workspace from a directory path by attempting to locate
+    /// a valid manifest file. If no manifest file is found then the workspace
+    /// project root is assumed to be at the current working directory.
+    pub fn from_path(dir_path: impl AsRef<Path>) -> HuakResult<Workspace<'static>> {
+        todo!()
+    }
+
+    /// Get the workspace project.
+    pub fn project(&self) -> &Project {
+        &self.project
+    }
+
+    /// Get a workspace environment.
+    pub fn environment(&self, name: &str) -> Environment {
+        todo!()
+    }
+
+    /// Add an environment to the workspace.
+    pub fn add_environment(&mut self, name: &str, env: Environment) -> HuakResult<()> {
+        todo!()
+    }
 }
 
 /// A Python project can be anything from a script to automate some process to a
@@ -68,12 +110,6 @@ impl Project {
     pub fn new_app() -> Project {
         let project_type = ProjectType::Application;
 
-        todo!()
-    }
-
-    /// Initialize a project from a directory, searching for a pyproject.toml to mark
-    /// the project's root directory.
-    pub fn from_dir(path: impl AsRef<Path>) -> HuakResult<Project> {
         todo!()
     }
 
@@ -162,7 +198,7 @@ pub struct PyProjectTomlWrapper {
 impl Default for PyProjectTomlWrapper {
     fn default() -> Self {
         Self {
-            inner: PyProjectToml::new(DEFAULT_PYPROJECT_TOML_STR)
+            inner: PyProjectToml::new(DEFAULT_PYPROJECT_TOML_CONTENTS)
                 .expect("could not initilize default pyproject.toml"),
         }
     }
@@ -232,6 +268,10 @@ impl ToString for PyProjectTomlWrapper {
     }
 }
 
+pub fn default_pyproject_toml_contents() -> &'static str {
+    DEFAULT_PYPROJECT_TOML_CONTENTS
+}
+
 /// Environments can be anything from a model of the system environment to a specific
 /// type of Python environment such as a virtual environment.
 #[derive(Default)]
@@ -256,18 +296,13 @@ impl Environment {
         todo!()
     }
 
-    /// Initilize an environment with an absolute path to a Python virtual environment.
-    pub fn with_venv_path(path: impl AsRef<Path>) -> Environment {
+    /// Initialize a virtual environment from its absolute path.
+    pub fn venv(path: impl AsRef<Path>) -> HuakResult<Environment> {
         todo!()
     }
 
-    /// Initilize an environment by finding a local Python virtual environment.
-    pub fn with_find_venv() -> HuakResult<Environment> {
-        todo!()
-    }
-
-    /// Create a Python environment on the system.
-    pub fn create() -> HuakResult<Environment> {
+    /// Create a Python virtual environment on the system.
+    pub fn create_venv() -> HuakResult<()> {
         todo!()
     }
 
@@ -317,7 +352,7 @@ impl Environment {
     }
 
     /// Get a package from the site-packages directory if it is already installed.
-    pub fn find_site_packages_package(&self, name: &str) -> Package {
+    pub fn find_site_packages_package(&self, name: &str) -> Option<Package> {
         todo!()
     }
 
@@ -487,12 +522,27 @@ impl Display for Package {
     }
 }
 
+impl PartialEq for Package {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name
+            && self.canonical_name == other.canonical_name
+            && self.core_metadata == other.core_metadata
+            && self.version == other.version
+            && self.version_operator == other.version_operator
+            && self.platform_tags == other.platform_tags
+    }
+}
+
+impl Eq for Package {}
+
 /// Core package metadata.
 /// https://packaging.python.org/en/latest/specifications/core-metadata/
+#[derive(PartialEq, Eq)]
 pub struct PackageMetadata;
 
 /// Tags used to indicate platform compatibility.
 /// https://packaging.python.org/en/latest/specifications/platform-compatibility-tags/
+#[derive(PartialEq, Eq)]
 pub enum PlatformTag {}
 
 /// Package distribtion info stored in the site-packages directory adjacent to the
@@ -554,18 +604,15 @@ mod tests {
     use super::*;
 
     #[test]
-    fn project_from_dir() {
+    fn workspace_from_path() {
         let dir = tempdir().unwrap().into_path();
         let mock_dir = test_resources_dir_path().join("mock-project");
         fs::copy_dir(&mock_dir, &dir).unwrap();
 
-        let project_from_root = Project::from_dir(&dir.join("mock-project")).unwrap();
-        let project_from_package_root =
-            Project::from_dir(&dir.join("mock-project").join("src").join("mock_project")).unwrap();
+        let ws = Workspace::from_path(&dir.join("mock-project")).unwrap();
+        let project = ws.project();
 
-        assert!(project_from_root.is_valid());
-        assert!(project_from_package_root.is_valid());
-        assert_eq!(project_from_root.root(), project_from_package_root.root());
+        assert!(project.project_layout.pyproject_toml_path.exists())
     }
 
     #[test]
@@ -786,34 +833,10 @@ build-backend = "hatchling.build"
     }
 
     #[test]
-    fn environment_with_venv() {
-        let dir = tempdir().unwrap().into_path();
-        let env = Environment::with_venv_path(dir.join(".venv"));
-        let venv_root = env.python_path.parent().unwrap().parent().unwrap();
-
-        assert!(env.is_valid());
-        assert_eq!(venv_root, dir.join(".venv"));
-        assert!(venv_root.join("pyvenv.cfg").exists());
-    }
-
-    #[test]
-    /// NOTE: This test depends on local virtual environment.
-    fn environment_with_find_venv() {
-        let mut env = Environment::with_find_venv().unwrap();
-        let venv_root = env.python_path().parent().unwrap().parent().unwrap();
-
-        assert!(env.is_valid());
-        assert_eq!(
-            venv_root,
-            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(".venv")
-        );
-        assert!(venv_root.join("pyvenv.cfg").exists());
-    }
-
-    #[test]
     /// NOTE: This test depends on local virtual environment.
     fn environment_executable_dir_name() {
-        let mut env = Environment::with_find_venv().unwrap();
+        let env =
+            Environment::venv(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(".venv")).unwrap();
 
         assert!(env.python_executables_dir_path().exists());
         #[cfg(unix)]
@@ -828,7 +851,8 @@ build-backend = "hatchling.build"
     #[test]
     /// NOTE: This test depends on local virtual environment.
     fn environment_python_config() {
-        let env = Environment::with_find_venv().unwrap();
+        let env =
+            Environment::venv(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(".venv")).unwrap();
         let venv_root = env.python_path().parent().unwrap().parent().unwrap();
 
         assert_eq!(
