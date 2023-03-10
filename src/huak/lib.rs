@@ -1,8 +1,9 @@
 use error::HuakResult;
 use pep440_rs::{Operator as VersionOperator, Version};
-use pyproject_toml::PyProjectToml;
+use pyproject_toml::PyProjectToml as ProjectToml;
+use serde::{Deserialize, Serialize};
 use std::{
-    collections::HashMap,
+    collections::{hash_map::RandomState, HashMap},
     fmt::Display,
     fs::File,
     path::{Path, PathBuf},
@@ -62,11 +63,6 @@ impl Workspace<'_> {
         &self.project
     }
 
-    /// Get a workspace environment.
-    pub fn environment(&self, name: &str) -> Environment {
-        todo!()
-    }
-
     /// Add an environment to the workspace.
     pub fn add_environment(&mut self, name: &str, env: Environment) -> HuakResult<()> {
         todo!()
@@ -86,7 +82,7 @@ pub struct Project {
     project_layout: ProjectLayout,
     /// The project's pyproject.toml file containing metadata about the project.
     /// See https://peps.python.org/pep-0621/
-    pyproject_toml_wrapper: PyProjectTomlWrapper,
+    pyproject_toml: PyProjectToml,
     /// The project's main dependencies.
     dependencies: Vec<Package>,
     /// The project's optional dependencies.
@@ -120,11 +116,6 @@ impl Project {
 
     /// Get the Python project's pyproject.toml file.
     pub fn pyproject_toml(&self) -> &PyProjectToml {
-        todo!()
-    }
-
-    /// Get a wrapper around the PyProjectToml data.
-    pub fn pyproject_toml_wrapper(&self) -> &PyProjectTomlWrapper {
         todo!()
     }
 
@@ -189,29 +180,31 @@ pub struct ProjectLayout {
     pyproject_toml_path: PathBuf,
 }
 
-/// The pyproject.toml struct containing an inner PyProjectToml.
-pub struct PyProjectTomlWrapper {
-    /// Inner pyproject.toml
-    inner: PyProjectToml,
+/// A pyproject.toml as specified in PEP 517
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "kebab-case")]
+pub struct PyProjectToml {
+    #[serde(flatten)]
+    inner: ProjectToml,
 }
 
-impl Default for PyProjectTomlWrapper {
+impl Default for PyProjectToml {
     fn default() -> Self {
         Self {
-            inner: PyProjectToml::new(DEFAULT_PYPROJECT_TOML_CONTENTS)
+            inner: ProjectToml::new(DEFAULT_PYPROJECT_TOML_CONTENTS)
                 .expect("could not initilize default pyproject.toml"),
         }
     }
 }
 
-impl PyProjectTomlWrapper {
-    // Create new pyproject.toml data.
-    pub fn new() -> PyProjectTomlWrapper {
+impl PyProjectToml {
+    /// Create new pyproject.toml data.
+    pub fn new() -> PyProjectToml {
         todo!()
     }
 
     /// Create new pyproject.toml data from a pyproject.toml's path.
-    pub fn from_path(path: impl AsRef<Path>) -> HuakResult<PyProjectTomlWrapper> {
+    pub fn from_path(path: impl AsRef<Path>) -> HuakResult<PyProjectToml> {
         todo!()
     }
 
@@ -255,13 +248,18 @@ impl PyProjectTomlWrapper {
         todo!()
     }
 
+    /// Get the scripts listed in the toml.
+    pub fn scripts(&self) -> HashMap<String, String, RandomState> {
+        todo!()
+    }
+
     /// Check if the project is setup correctly.
     pub fn is_valid(&self) -> bool {
         todo!()
     }
 }
 
-impl ToString for PyProjectTomlWrapper {
+impl ToString for PyProjectToml {
     /// Serialize the current pyproject.toml data to str.
     fn to_string(&self) -> String {
         todo!()
@@ -338,6 +336,16 @@ impl Environment {
 
     /// The absolute path to the Python environment's site-packages directory.
     pub fn site_packages_dir_path(&self) -> &PathBuf {
+        todo!()
+    }
+
+    /// Install a Python package to the environment.
+    pub fn install_package(&mut self, package: &Package) -> HuakResult<()> {
+        todo!()
+    }
+
+    /// Uninstall a Python package from the environment.
+    pub fn uninstall_package(&mut self, package_name: &str) -> HuakResult<()> {
         todo!()
     }
 
@@ -636,7 +644,7 @@ mod tests {
         let path = test_resources_dir_path()
             .join("mock-project")
             .join("pyproject.toml");
-        let toml = PyProjectTomlWrapper::from_path(&path).unwrap();
+        let toml = PyProjectToml::from_path(&path).unwrap();
 
         assert!(toml.is_valid());
         assert_eq!(toml.project_name(), "mock_project");
@@ -645,7 +653,7 @@ mod tests {
 
     #[test]
     fn toml_to_str() {
-        let default_toml = PyProjectTomlWrapper::default();
+        let default_toml = PyProjectToml::default();
         let default_toml_str = default_toml.to_string();
 
         assert!(!default_toml.is_valid());
@@ -668,7 +676,7 @@ build-backend = "hatchling.build"
         let path = test_resources_dir_path()
             .join("mock-projet")
             .join("pyproject.toml");
-        let toml = PyProjectTomlWrapper::from_path(path).unwrap();
+        let toml = PyProjectToml::from_path(path).unwrap();
 
         assert_eq!(
             toml.dependencies().deref(),
@@ -681,7 +689,7 @@ build-backend = "hatchling.build"
         let path = test_resources_dir_path()
             .join("mock-projet")
             .join("pyproject.toml");
-        let toml = PyProjectTomlWrapper::from_path(path).unwrap();
+        let toml = PyProjectToml::from_path(path).unwrap();
 
         assert_eq!(
             toml.optional_dependencey_group("test").deref(),
@@ -694,7 +702,7 @@ build-backend = "hatchling.build"
         let path = test_resources_dir_path()
             .join("mock-projet")
             .join("pyproject.toml");
-        let mut toml = PyProjectTomlWrapper::from_path(path).unwrap();
+        let mut toml = PyProjectToml::from_path(path).unwrap();
 
         toml.add_dependency("test");
         assert_eq!(
@@ -725,7 +733,7 @@ build-backend = "hatchling.build"
         let path = test_resources_dir_path()
             .join("mock-projet")
             .join("pyproject.toml");
-        let mut toml = PyProjectTomlWrapper::from_path(path).unwrap();
+        let mut toml = PyProjectToml::from_path(path).unwrap();
 
         toml.add_optional_dependency("test", "test");
         toml.add_optional_dependency("new", "test");
@@ -758,7 +766,7 @@ build-backend = "hatchling.build"
         let path = test_resources_dir_path()
             .join("mock-projet")
             .join("pyproject.toml");
-        let mut toml = PyProjectTomlWrapper::from_path(path).unwrap();
+        let mut toml = PyProjectToml::from_path(path).unwrap();
 
         toml.remove_dependency("isort");
         assert_eq!(
@@ -789,7 +797,7 @@ build-backend = "hatchling.build"
         let path = test_resources_dir_path()
             .join("mock-projet")
             .join("pyproject.toml");
-        let mut toml = PyProjectTomlWrapper::from_path(path).unwrap();
+        let mut toml = PyProjectToml::from_path(path).unwrap();
 
         toml.remove_optional_dependency("test", "mock");
         assert_eq!(

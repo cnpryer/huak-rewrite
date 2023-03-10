@@ -15,6 +15,7 @@ git2 = "0.16.1"
 pep440_rs = { git = "https://github.com/konstin/pep440-rs", rev = "3148c9016cbc01a9e6116ae8080b10e14e985487", version = "0.1.1" }
 pyproject-toml = "0.3.3"
 reqwest = "0.11.14"
+serde = { version = "1.0.154", features = ["derive"] }
 thiserror = "1.0.38"
 toml_edit = "0.19.4"
 
