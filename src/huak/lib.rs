@@ -508,8 +508,8 @@ impl Package {
         todo!()
     }
 
-    /// Get the formatted str of the package to display.
-    pub fn display(&self) -> &str {
+    /// Get the pacakge name with its version specifier as a &str.
+    pub fn dependency_str(&self) -> &str {
         todo!()
     }
 }
@@ -873,7 +873,7 @@ build-backend = "hatchling.build"
     fn package_display_str() {
         let package = Package::from_str_parts("package", "==", "0.0.0");
 
-        assert_eq!(package.display(), "package==0.0.0");
+        assert_eq!(package.dependency_str(), "package==0.0.0");
     }
 
     #[test]
@@ -887,7 +887,7 @@ build-backend = "hatchling.build"
     fn package_from_str() {
         let package = Package::from_str("package==0.0.0").unwrap();
 
-        assert_eq!(package.display(), "package==0.0.0");
+        assert_eq!(package.dependency_str(), "package==0.0.0");
         assert_eq!(package.name(), "package");
         assert_eq!(
             package.version_operator().to_string(),

@@ -167,11 +167,11 @@ mod tests {
         assert!(deps
             .iter()
             .map(|item| item)
-            .all(|item| ser_toml.dependencies().contains(&item.display())));
+            .all(|item| ser_toml.dependencies().contains(&item.dependency_str())));
         assert!(deps.iter().map(|item| item).all(|item| project
             .pyproject_toml()
             .dependencies()
-            .contains(&item.display())));
+            .contains(&item.dependency_str())));
     }
 
     #[test]
@@ -196,11 +196,11 @@ mod tests {
             .all(|item| project.optional_dependencey_group("test").contains(item)));
         assert!(deps.iter().map(|item| item).all(|item| ser_toml
             .optional_dependencey_group("test")
-            .contains(&item.display())));
+            .contains(&item.dependency_str())));
         assert!(deps.iter().map(|item| item).all(|item| project
             .pyproject_toml()
             .optional_dependencey_group("test")
-            .contains(&item.display())));
+            .contains(&item.dependency_str())));
     }
 
     #[test]
@@ -465,7 +465,7 @@ main()
             .project()
             .pyproject_toml()
             .dependencies()
-            .contains(&black_package.display());
+            .contains(&black_package.dependency_str());
 
         remove_project_dependencies(&ws, &[black_package.name()]).unwrap();
 
@@ -480,7 +480,7 @@ main()
             .project()
             .pyproject_toml()
             .dependencies()
-            .contains(&black_package.display());
+            .contains(&black_package.dependency_str());
         ws.environments
             .get_mut("default")
             .unwrap()
@@ -510,7 +510,7 @@ main()
             .project()
             .pyproject_toml()
             .dependencies()
-            .contains(&pytest_package.display());
+            .contains(&pytest_package.dependency_str());
 
         remove_project_optional_dependencies(&ws, &[pytest_package.name()], &["test"]).unwrap();
 
@@ -525,7 +525,7 @@ main()
             .project()
             .pyproject_toml()
             .dependencies()
-            .contains(&pytest_package.display());
+            .contains(&pytest_package.dependency_str());
         ws.environments
             .get_mut("default")
             .unwrap()
