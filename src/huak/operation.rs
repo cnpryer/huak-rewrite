@@ -1,5 +1,5 @@
 ///! This module implements various operations to interact with valid workspaces
-///! exsting on a system.
+///! existing on a system.
 use crate::{error::HuakResult, Environment, Package, Workspace};
 use std::path::Path;
 
