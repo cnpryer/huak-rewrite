@@ -213,6 +213,11 @@ impl PyProjectToml {
         todo!()
     }
 
+    /// Set the project name listed in the toml.
+    pub fn set_project_name(&mut self, name: &str) {
+        todo!()
+    }
+
     /// Get the project version.
     pub fn project_version(&self) -> &String {
         todo!()
@@ -253,15 +258,24 @@ impl PyProjectToml {
         todo!()
     }
 
+    /// Save the toml contents to a filepath.
+    pub fn write_file(&self, path: impl AsRef<Path>) -> HuakResult<()> {
+        let string = self.to_string_pretty()?;
+        Ok(std::fs::write(path, string)?)
+    }
+
+    /// Convert the toml struct to a formatted String.
+    pub fn to_string_pretty(&self) -> HuakResult<String> {
+        Ok(toml_edit::ser::to_string_pretty(&self)?)
+    }
+
+    /// Convert the toml to a string as-is.
+    pub fn to_string(&self) -> HuakResult<String> {
+        Ok(toml_edit::ser::to_string(&self)?)
+    }
+
     /// Check if the project is setup correctly.
     pub fn is_valid(&self) -> bool {
-        todo!()
-    }
-}
-
-impl ToString for PyProjectToml {
-    /// Serialize the current pyproject.toml data to str.
-    fn to_string(&self) -> String {
         todo!()
     }
 }
@@ -644,17 +658,17 @@ mod tests {
         let path = test_resources_dir_path()
             .join("mock-project")
             .join("pyproject.toml");
-        let toml = PyProjectToml::from_path(&path).unwrap();
+        let ptoml = PyProjectToml::from_path(&path).unwrap();
 
-        assert!(toml.is_valid());
-        assert_eq!(toml.project_name(), "mock_project");
-        assert_eq!(toml.project_version(), "0.0.1");
+        assert!(ptoml.is_valid());
+        assert_eq!(ptoml.project_name(), "mock_project");
+        assert_eq!(ptoml.project_version(), "0.0.1");
     }
 
     #[test]
     fn toml_to_str() {
         let default_toml = PyProjectToml::default();
-        let default_toml_str = default_toml.to_string();
+        let default_toml_str = default_toml.to_string_pretty().unwrap();
 
         assert!(!default_toml.is_valid());
         assert_eq!(
@@ -676,10 +690,10 @@ build-backend = "hatchling.build"
         let path = test_resources_dir_path()
             .join("mock-projet")
             .join("pyproject.toml");
-        let toml = PyProjectToml::from_path(path).unwrap();
+        let ptoml = PyProjectToml::from_path(path).unwrap();
 
         assert_eq!(
-            toml.dependencies().deref(),
+            ptoml.dependencies().deref(),
             vec!["click==8.1.3", "black==22.8.0", "isort==5.12.0"]
         );
     }
@@ -689,10 +703,10 @@ build-backend = "hatchling.build"
         let path = test_resources_dir_path()
             .join("mock-projet")
             .join("pyproject.toml");
-        let toml = PyProjectToml::from_path(path).unwrap();
+        let ptoml = PyProjectToml::from_path(path).unwrap();
 
         assert_eq!(
-            toml.optional_dependencey_group("test").deref(),
+            ptoml.optional_dependencey_group("test").deref(),
             vec!["pytest>=6", "mock"]
         );
     }
@@ -702,11 +716,11 @@ build-backend = "hatchling.build"
         let path = test_resources_dir_path()
             .join("mock-projet")
             .join("pyproject.toml");
-        let mut toml = PyProjectToml::from_path(path).unwrap();
+        let mut ptoml = PyProjectToml::from_path(path).unwrap();
 
-        toml.add_dependency("test");
+        ptoml.add_dependency("test");
         assert_eq!(
-            toml.to_string(),
+            ptoml.to_string_pretty().unwrap(),
             r#"[project]
 [project]
 name = "mock_project"
@@ -733,12 +747,12 @@ build-backend = "hatchling.build"
         let path = test_resources_dir_path()
             .join("mock-projet")
             .join("pyproject.toml");
-        let mut toml = PyProjectToml::from_path(path).unwrap();
+        let mut ptoml = PyProjectToml::from_path(path).unwrap();
 
-        toml.add_optional_dependency("test", "test");
-        toml.add_optional_dependency("new", "test");
+        ptoml.add_optional_dependency("test", "test");
+        ptoml.add_optional_dependency("new", "test");
         assert_eq!(
-            toml.to_string(),
+            ptoml.to_string_pretty().unwrap(),
             r#"[project]
 [project]
 name = "mock_project"
@@ -766,11 +780,11 @@ build-backend = "hatchling.build"
         let path = test_resources_dir_path()
             .join("mock-projet")
             .join("pyproject.toml");
-        let mut toml = PyProjectToml::from_path(path).unwrap();
+        let mut ptoml = PyProjectToml::from_path(path).unwrap();
 
-        toml.remove_dependency("isort");
+        ptoml.remove_dependency("isort");
         assert_eq!(
-            toml.to_string(),
+            ptoml.to_string_pretty().unwrap(),
             r#"[project]
 [project]
 name = "mock_project"
@@ -797,11 +811,11 @@ build-backend = "hatchling.build"
         let path = test_resources_dir_path()
             .join("mock-projet")
             .join("pyproject.toml");
-        let mut toml = PyProjectToml::from_path(path).unwrap();
+        let mut ptoml = PyProjectToml::from_path(path).unwrap();
 
-        toml.remove_optional_dependency("test", "mock");
+        ptoml.remove_optional_dependency("test", "mock");
         assert_eq!(
-            toml.to_string(),
+            ptoml.to_string_pretty().unwrap(),
             r#"[project]
 [project]
 name = "mock_project"

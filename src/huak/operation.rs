@@ -260,7 +260,7 @@ def fn( ):
         let ser_toml = PyProjectToml::from_path(toml_path).unwrap();
 
         assert_eq!(
-            ser_toml.to_string(),
+            ser_toml.to_string_pretty().unwrap(),
             crate::default_pyproject_toml_contents()
         );
     }
