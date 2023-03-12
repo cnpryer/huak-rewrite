@@ -607,8 +607,8 @@ pub struct DistInfo {
 pub struct Platform {
     /// The name of the platform.
     name: String,
-    /// The absolute path to the installed Python interpreter.
-    python_path: PathBuf,
+    /// Absolute paths to each Python interpreter installed.
+    python_paths: HashMap<Version, PathBuf>,
 }
 
 impl Platform {
@@ -622,13 +622,13 @@ impl Platform {
         todo!()
     }
 
-    /// Get the absolute path to the latest version Python interpreter installed.
-    pub fn latest_python_path(&self) -> Option<&PathBuf> {
+    /// Get the absolute path to a specific Python interpreter with a version &str.
+    pub fn python_path(&self, version_str: &str) -> Option<&PathBuf> {
         todo!()
     }
 
-    /// Get the absolute path to a specific Python interpreter with a version &str.
-    pub fn python_path(&self, version_str: &str) -> Option<&PathBuf> {
+    /// Get the absolute path to the latest version Python interpreter installed.
+    pub fn python_path_latest(&self) -> Option<&PathBuf> {
         todo!()
     }
 }
@@ -998,6 +998,6 @@ build-backend = "hatchling.build"
     fn platform_with_python() {
         let platform = Platform::new();
 
-        assert!(platform.python_path.exists())
+        assert!(platform.python_path_latest().exists())
     }
 }
