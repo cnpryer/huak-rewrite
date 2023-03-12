@@ -1,10 +1,10 @@
 ///! This module implements various operations to interact with valid workspaces
 ///! existing on a system.
-use crate::{error::HuakResult, Environment, Package, Workspace};
+use crate::{error::HuakResult, Package, PythonEnvironment, Workspace};
 use std::path::Path;
 
 /// Activate a Python virtual environment.
-pub fn activate_venv(env: Environment) -> HuakResult<()> {
+pub fn activate_venv(env: PythonEnvironment) -> HuakResult<()> {
     todo!()
 }
 
@@ -156,11 +156,13 @@ mod tests {
 
         let ws = Workspace::from_path(dir.join("mock-project")).unwrap();
         let project = ws.project();
-        let env = ws.environments.get("default").unwrap();
+        let python_environment = ws.python_environments.get("default").unwrap();
         let ser_toml =
             PyProjectToml::from_path(dir.join("mock-project").join("pyproject.toml")).unwrap();
 
-        assert!(env.find_site_packages_package("ruff").is_some());
+        assert!(python_environment
+            .find_site_packages_package("ruff")
+            .is_some());
         assert!(deps
             .iter()
             .all(|item| project.dependencies().contains(item)));
@@ -186,11 +188,13 @@ mod tests {
 
         let ws = Workspace::from_path(dir.join("mock-project")).unwrap();
         let project = ws.project();
-        let env = ws.environments.get("default").unwrap();
+        let python_environment = ws.python_environments.get("default").unwrap();
         let ser_toml =
             PyProjectToml::from_path(dir.join("mock-project").join("pyproject.toml")).unwrap();
 
-        assert!(env.find_site_packages_package("ruff").is_some());
+        assert!(python_environment
+            .find_site_packages_package("ruff")
+            .is_some());
         assert!(deps
             .iter()
             .all(|item| project.optional_dependencey_group("test").contains(item)));
@@ -209,8 +213,9 @@ mod tests {
         crate::fs::copy_dir(&test_resources_dir_path().join("mock-project"), &dir).unwrap();
 
         let mut ws = Workspace::from_path(dir.join("mock-project")).unwrap();
-        let env = Environment::venv(".venv").unwrap();
-        ws.add_environment("default", env).unwrap();
+        let python_environment = PythonEnvironment::venv(".venv").unwrap();
+        ws.add_python_environment("default", python_environment)
+            .unwrap();
 
         build_project(&ws).unwrap();
     }
@@ -271,9 +276,11 @@ def fn( ):
         crate::fs::copy_dir(&test_resources_dir_path().join("mock-project"), &dir).unwrap();
 
         let mut ws = Workspace::from_path(dir.join("mock-project")).unwrap();
-        let env = ws.environments.get_mut("default").unwrap();
-        env.uninstall_package("black").unwrap();
-        let had_black = env.find_site_packages_package("black").is_some();
+        let python_environment = ws.python_environments.get_mut("default").unwrap();
+        python_environment.uninstall_package("black").unwrap();
+        let had_black = python_environment
+            .find_site_packages_package("black")
+            .is_some();
 
         install_project_dependencies(&ws).unwrap();
 
@@ -281,7 +288,7 @@ def fn( ):
 
         assert!(!had_black);
         assert!(ws
-            .environments
+            .python_environments
             .get("default")
             .unwrap()
             .find_site_packages_package("black")
@@ -294,7 +301,7 @@ def fn( ):
         crate::fs::copy_dir(&test_resources_dir_path().join("mock-project"), &dir).unwrap();
 
         let mut ws = Workspace::from_path(dir.join("mock-project")).unwrap();
-        let env = ws.environments.get_mut("default").unwrap();
+        let env = ws.python_environments.get_mut("default").unwrap();
         env.uninstall_package("pytest").unwrap();
         let had_pytest = env.find_site_packages_package("pytest").is_some();
 
@@ -304,7 +311,7 @@ def fn( ):
 
         assert!(!had_pytest);
         assert!(ws
-            .environments
+            .python_environments
             .get("default")
             .unwrap()
             .find_site_packages_package("pytest")
@@ -455,7 +462,7 @@ main()
 
         let ws = Workspace::from_path(dir.join("mock-project")).unwrap();
         let black_package = ws
-            .environments
+            .python_environments
             .get("default")
             .unwrap()
             .find_site_packages_package("black");
@@ -471,7 +478,7 @@ main()
 
         let mut ws = Workspace::from_path(dir.join("mock-project")).unwrap();
         let env_has_black = ws
-            .environments
+            .python_environments
             .get_mut("default")
             .unwrap()
             .find_site_packages_package("black")
@@ -481,7 +488,7 @@ main()
             .pyproject_toml()
             .dependencies()
             .contains(&black_package.dependency_str());
-        ws.environments
+        ws.python_environments
             .get_mut("default")
             .unwrap()
             .install_package(&black_package)
@@ -500,7 +507,7 @@ main()
 
         let ws = Workspace::from_path(dir.join("mock-project")).unwrap();
         let pytest_package = ws
-            .environments
+            .python_environments
             .get("default")
             .unwrap()
             .find_site_packages_package("pytest");
@@ -516,7 +523,7 @@ main()
 
         let mut ws = Workspace::from_path(dir.join("mock-project")).unwrap();
         let env_has_pytest = ws
-            .environments
+            .python_environments
             .get_mut("default")
             .unwrap()
             .find_site_packages_package("pytest")
@@ -526,7 +533,7 @@ main()
             .pyproject_toml()
             .dependencies()
             .contains(&pytest_package.dependency_str());
-        ws.environments
+        ws.python_environments
             .get_mut("default")
             .unwrap()
             .install_package(&pytest_package)
@@ -545,7 +552,7 @@ main()
 
         let mut ws = Workspace::from_path(dir.join("mock-project")).unwrap();
         let env_had_xlcsv = ws
-            .environments
+            .python_environments
             .get_mut("default")
             .unwrap()
             .find_site_packages_package("xlcsv")
@@ -554,7 +561,7 @@ main()
         run_command_str_with_context(&ws, "pip install xlcsv").unwrap();
 
         let mut ws = Workspace::from_path(dir.join("mock-project")).unwrap();
-        let env = ws.environments.get_mut("default").unwrap();
+        let env = ws.python_environments.get_mut("default").unwrap();
         let env_has_xlcsv = env.find_site_packages_package("xlcsv").is_some();
         env.uninstall_package("xlcsv").unwrap();
 

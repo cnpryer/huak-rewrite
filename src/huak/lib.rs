@@ -37,17 +37,17 @@ pub struct Workspace<'a> {
     /// A Python project part of the workspace.
     project: Project,
     /// Environments assigned to the workspace.
-    environments: HashMap<&'a str, Environment>,
+    python_environments: HashMap<&'a str, PythonEnvironment>,
 }
 
 impl Workspace<'_> {
     /// Create a new workspace.
     pub fn new() -> Workspace<'static> {
-        let mut environments = HashMap::new();
-        environments.insert("default", Environment::new());
+        let mut python_environments = HashMap::new();
+        python_environments.insert("default", PythonEnvironment::new());
         Workspace {
             project: Project::new(),
-            environments: environments,
+            python_environments,
         }
     }
 
@@ -64,7 +64,7 @@ impl Workspace<'_> {
     }
 
     /// Add an environment to the workspace.
-    pub fn add_environment(&mut self, name: &str, env: Environment) -> HuakResult<()> {
+    pub fn add_python_environment(&mut self, name: &str, env: PythonEnvironment) -> HuakResult<()> {
         todo!()
     }
 }
@@ -284,10 +284,21 @@ pub fn default_pyproject_toml_contents() -> &'static str {
     DEFAULT_PYPROJECT_TOML_CONTENTS
 }
 
-/// Environments can be anything from a model of the system environment to a specific
-/// type of Python environment such as a virtual environment.
+/// Environments contain data about things like the Python installation.
+/// A Python environment to Huak is an environment that
+///   - Python packages can be installed to
+///   - Can be used as a Python workflow context
+///     - Run commands against
+///     - Create and destroy
+///     - ...
+///   - Is PEP compliant
+///       lib
+///         └── pythonX.XX
+///           └── site-packages
+///             ├── some_pkg
+///             └── some_pkg-X.X.X.dist-info
 #[derive(Default)]
-pub struct Environment {
+pub struct PythonEnvironment {
     /// The environment's configuration data.
     python_config: PythonEnvironmentConfig,
     /// The absolute path to the environment's Python interpreter.
@@ -302,14 +313,14 @@ pub struct Environment {
     base_site_packages_dir_path: PathBuf,
 }
 
-impl Environment {
+impl PythonEnvironment {
     /// Create a new `Environement`.
-    pub fn new() -> Environment {
+    pub fn new() -> PythonEnvironment {
         todo!()
     }
 
     /// Initialize a virtual environment from its absolute path.
-    pub fn venv(path: impl AsRef<Path>) -> HuakResult<Environment> {
+    pub fn venv(path: impl AsRef<Path>) -> HuakResult<PythonEnvironment> {
         todo!()
     }
 
@@ -606,15 +617,45 @@ impl Platform {
         todo!()
     }
 
-    /// Create a new platform and search for an installed Python interpreter.
-    pub fn with_find_python() -> Platform {
+    /// Install a Python interpreter.
+    pub fn install_python(&mut self, version_str: &str) -> HuakResult<()> {
         todo!()
     }
 
-    /// Get the absolute path to the installed Python interpreter.
-    pub fn python_path(&self) -> &PathBuf {
+    /// Get the absolute path to the latest version Python interpreter installed.
+    pub fn latest_python_path(&self) -> Option<&PathBuf> {
         todo!()
     }
+
+    /// Get the absolute path to a specific Python interpreter with a version &str.
+    pub fn python_path(&self, version_str: &str) -> Option<&PathBuf> {
+        todo!()
+    }
+}
+
+/// Get a hashmap of Python interpreters. Each entry is stored with the interpreter's
+/// version as its key and the absolute path the the interpreter as the value.
+pub fn find_python_interpreter_paths() -> HashMap<Version, PathBuf> {
+    todo!()
+}
+
+/// Get a vector of paths from the system PATH environment variable.
+fn system_env_path() -> Vec<PathBuf> {
+    match std::env::var_os("PATH") {
+        Some(path_val) => std::env::split_paths(&path_val).collect(),
+        None => Vec::new(),
+    }
+}
+
+fn flatten_directories(
+    directories: impl IntoIterator<Item = PathBuf>,
+) -> impl Iterator<Item = PathBuf> {
+    directories
+        .into_iter()
+        .filter_map(|p| p.read_dir().ok())
+        .flatten()
+        .filter_map(|e| e.ok())
+        .map(|e| e.path())
 }
 
 #[cfg(test)]
@@ -838,12 +879,13 @@ build-backend = "hatchling.build"
     }
 
     #[test]
-    fn environment_default() {
-        let env = Environment::default();
+    fn python_environment_default() {
+        let python_environment = PythonEnvironment::default();
 
-        assert!(env.is_valid());
+        assert!(python_environment.is_valid());
         assert_eq!(
-            env.python_path()
+            python_environment
+                .python_path()
                 .parent()
                 .unwrap()
                 .parent()
@@ -856,15 +898,19 @@ build-backend = "hatchling.build"
 
     #[test]
     /// NOTE: This test depends on local virtual environment.
-    fn environment_executable_dir_name() {
-        let env =
-            Environment::venv(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(".venv")).unwrap();
+    fn python_environment_executable_dir_name() {
+        let python_environment =
+            PythonEnvironment::venv(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(".venv"))
+                .unwrap();
 
-        assert!(env.python_executables_dir_path().exists());
+        assert!(python_environment.python_executables_dir_path().exists());
         #[cfg(unix)]
-        assert!(env.python_executables_dir_path().join("python").exists());
+        assert!(python_environment
+            .python_executables_dir_path()
+            .join("python")
+            .exists());
         #[cfg(windows)]
-        assert!(env
+        assert!(python_environment
             .python_executables_dir_path()
             .join("python.exe")
             .exists());
@@ -872,13 +918,19 @@ build-backend = "hatchling.build"
 
     #[test]
     /// NOTE: This test depends on local virtual environment.
-    fn environment_python_config() {
-        let env =
-            Environment::venv(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(".venv")).unwrap();
-        let venv_root = env.python_path().parent().unwrap().parent().unwrap();
+    fn python_environment_python_config() {
+        let python_environment =
+            PythonEnvironment::venv(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(".venv"))
+                .unwrap();
+        let venv_root = python_environment
+            .python_path()
+            .parent()
+            .unwrap()
+            .parent()
+            .unwrap();
 
         assert_eq!(
-            env.python_environment_config().to_string(),
+            python_environment.python_environment_config().to_string(),
             std::fs::read_to_string(venv_root.join("pyvenv.cfg")).unwrap()
         );
     }
@@ -942,10 +994,9 @@ build-backend = "hatchling.build"
         todo!()
     }
 
-    /// NOTE: This test requires Python to be installed.
     #[test]
-    fn platform_with_find_python() {
-        let platform = Platform::with_find_python();
+    fn platform_with_python() {
+        let platform = Platform::new();
 
         assert!(platform.python_path.exists())
     }
