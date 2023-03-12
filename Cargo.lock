@@ -314,6 +314,7 @@ dependencies = [
  "reqwest",
  "serde",
  "tempfile",
+ "termcolor",
  "thiserror",
  "toml_edit",
 ]
