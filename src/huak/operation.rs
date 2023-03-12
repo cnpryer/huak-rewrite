@@ -1,4 +1,4 @@
-///! This module implements various operations to interact with valid workspaces
+///! This module &Workspaceimplements various operations to interact with valid workspaces
 ///! existing on a system.
 use crate::{error::HuakResult, Package, PythonEnvironment, Workspace};
 use std::path::Path;
@@ -9,16 +9,13 @@ pub fn activate_venv(env: PythonEnvironment) -> HuakResult<()> {
 }
 
 /// Add Python packages as a dependencies to a Python project.
-pub fn add_project_dependencies<'a>(
-    workspace: &Workspace<'a>,
-    dependencies: &[Package],
-) -> HuakResult<()> {
+pub fn add_project_dependencies(workspace: &Workspace, dependencies: &[Package]) -> HuakResult<()> {
     todo!()
 }
 
 /// Add Python packages as optional dependencies to a Python project.
-pub fn add_project_optional_dependencies<'a>(
-    workspace: &Workspace<'a>,
+pub fn add_project_optional_dependencies(
+    workspace: &Workspace,
     dependencies: &[Package],
     groups: &[&str],
 ) -> HuakResult<()> {
@@ -26,45 +23,45 @@ pub fn add_project_optional_dependencies<'a>(
 }
 
 /// Build the Python project as installable package.
-pub fn build_project<'a>(workspace: &Workspace<'a>) -> HuakResult<()> {
+pub fn build_project(workspace: &Workspace) -> HuakResult<()> {
     todo!()
 }
 
 /// Clean the dist directory.
-pub fn clean_project<'a>(workspace: &Workspace<'a>) -> HuakResult<()> {
+pub fn clean_project(workspace: &Workspace) -> HuakResult<()> {
     todo!()
 }
 
 /// Format the Python project's source code.
-pub fn format_project<'a>(workspace: &Workspace<'a>) -> HuakResult<()> {
+pub fn format_project(workspace: &Workspace) -> HuakResult<()> {
     todo!()
 }
 
 /// Initilize an existing Python project.
-pub fn init_project<'a>(workspace: &Workspace<'a>) -> HuakResult<()> {
+pub fn init_project(workspace: &Workspace) -> HuakResult<()> {
     todo!()
 }
 
 /// Install a Python project's dependencies to an environment.
-pub fn install_project_dependencies<'a>(workspace: &Workspace<'a>) -> HuakResult<()> {
+pub fn install_project_dependencies(workspace: &Workspace) -> HuakResult<()> {
     todo!()
 }
 
 /// Install groups of a Python project's optional dependencies to an environment.
-pub fn install_project_optional_dependencies<'a>(
-    workspace: &Workspace<'a>,
+pub fn install_project_optional_dependencies(
+    workspace: &Workspace,
     groups: &[&str],
 ) -> HuakResult<()> {
     todo!()
 }
 
 /// Lint a Python project's source code.
-pub fn lint_project<'a>(workspace: &Workspace<'a>) -> HuakResult<()> {
+pub fn lint_project(workspace: &Workspace) -> HuakResult<()> {
     todo!()
 }
 
 /// Fix any fixable lint issues found in the Python project's source code.
-pub fn fix_project_lints<'a>(workspace: &Workspace<'a>) -> HuakResult<()> {
+pub fn fix_project_lints(workspace: &Workspace) -> HuakResult<()> {
     todo!()
 }
 
@@ -84,16 +81,16 @@ pub fn create_new_app_project(root_path: impl AsRef<Path>) -> HuakResult<()> {
 }
 
 /// Remove a dependency from a Python project.
-pub fn remove_project_dependencies<'a>(
-    workspace: &Workspace<'a>,
+pub fn remove_project_dependencies(
+    workspace: &Workspace,
     dependency_names: &[&str],
 ) -> HuakResult<()> {
     todo!()
 }
 
 /// Remove a dependency from a Python project.
-pub fn remove_project_optional_dependencies<'a>(
-    workspace: &Workspace<'a>,
+pub fn remove_project_optional_dependencies(
+    workspace: &Workspace,
     dependency_names: &[&str],
     groups: &[&str],
 ) -> HuakResult<()> {
@@ -101,28 +98,22 @@ pub fn remove_project_optional_dependencies<'a>(
 }
 
 /// Run a command from within a Python project's context.
-pub fn run_command_str_with_context<'a>(
-    workspace: &Workspace<'a>,
-    command: &str,
-) -> HuakResult<()> {
+pub fn run_command_str_with_context(workspace: &Workspace, command: &str) -> HuakResult<()> {
     todo!()
 }
 
 /// Run a command from within a Python project's context.
-pub fn run_command_list_with_context<'a>(
-    workspace: &Workspace<'a>,
-    command: &[&str],
-) -> HuakResult<()> {
+pub fn run_command_list_with_context(workspace: &Workspace, command: &[&str]) -> HuakResult<()> {
     todo!()
 }
 
 /// Run a Python project's tests.
-pub fn test_project<'a>(workspace: &Workspace<'a>) -> HuakResult<()> {
+pub fn test_project(workspace: &Workspace) -> HuakResult<()> {
     todo!()
 }
 
 /// Display the version of the Python project.
-pub fn display_project_version<'a>(workspace: &Workspace<'a>) -> HuakResult<()> {
+pub fn display_project_version(workspace: &Workspace) -> HuakResult<()> {
     todo!()
 }
 

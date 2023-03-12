@@ -33,18 +33,18 @@ pub(crate) fn test_resources_dir_path() -> PathBuf {
 }
 
 /// An abstraction containing information about the workspace.
-pub struct Workspace<'a> {
+pub struct Workspace {
     /// A Python project part of the workspace.
     project: Project,
     /// Environments assigned to the workspace.
-    python_environments: HashMap<&'a str, PythonEnvironment>,
+    python_environments: HashMap<String, PythonEnvironment>,
     /// Information about the platform.
     platform: Platform,
 }
 
-impl Workspace<'_> {
+impl Workspace {
     /// Create a new workspace.
-    pub fn new() -> Workspace<'static> {
+    pub fn new() -> Workspace {
         Workspace {
             project: Project::new(),
             python_environments: HashMap::new(),
@@ -55,7 +55,7 @@ impl Workspace<'_> {
     /// Initialize a workspace from a directory path by attempting to locate
     /// a valid manifest file. If no manifest file is found then the workspace
     /// project root is assumed to be at the current working directory.
-    pub fn from_path(dir_path: impl AsRef<Path>) -> HuakResult<Workspace<'static>> {
+    pub fn from_path(dir_path: impl AsRef<Path>) -> HuakResult<Workspace> {
         todo!()
     }
 
