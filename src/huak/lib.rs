@@ -32,22 +32,23 @@ pub(crate) fn test_resources_dir_path() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources")
 }
 
-/// An abstraction containing the project and environments Huak interacts with.
+/// An abstraction containing information about the workspace.
 pub struct Workspace<'a> {
     /// A Python project part of the workspace.
     project: Project,
     /// Environments assigned to the workspace.
     python_environments: HashMap<&'a str, PythonEnvironment>,
+    /// Information about the platform.
+    platform: Platform,
 }
 
 impl Workspace<'_> {
     /// Create a new workspace.
     pub fn new() -> Workspace<'static> {
-        let mut python_environments = HashMap::new();
-        python_environments.insert("default", PythonEnvironment::new());
         Workspace {
             project: Project::new(),
-            python_environments,
+            python_environments: HashMap::new(),
+            platform: Platform::new()
         }
     }
 
@@ -998,6 +999,6 @@ build-backend = "hatchling.build"
     fn platform_with_python() {
         let platform = Platform::new();
 
-        assert!(platform.python_path_latest().exists())
+        assert!(platform.python_path_latest().unwrap().exists())
     }
 }
