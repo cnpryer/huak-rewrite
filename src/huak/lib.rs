@@ -48,7 +48,7 @@ impl Workspace<'_> {
         Workspace {
             project: Project::new(),
             python_environments: HashMap::new(),
-            platform: Platform::new()
+            platform: Platform::new(),
         }
     }
 
@@ -285,19 +285,14 @@ pub fn default_pyproject_toml_contents() -> &'static str {
     DEFAULT_PYPROJECT_TOML_CONTENTS
 }
 
-/// Environments contain data about things like the Python installation.
-/// A Python environment to Huak is an environment that
-///   - Python packages can be installed to
-///   - Can be used as a Python workflow context
-///     - Run commands against
-///     - Create and destroy
-///     - ...
-///   - Is PEP compliant
-///       lib
-///         └── pythonX.XX
-///           └── site-packages
-///             ├── some_pkg
-///             └── some_pkg-X.X.X.dist-info
+/// A PEP-compliant Python environment. Python environments have the following
+/// structure:
+///  lib
+///   └── pythonX.XX
+///     └── site-packages
+///       ├── some_pkg
+///       └── some_pkg-X.X.X.dist-info
+/// TODO: More Python environment documentation.
 #[derive(Default)]
 pub struct PythonEnvironment {
     /// The environment's configuration data.
