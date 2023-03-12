@@ -44,7 +44,7 @@ pub struct Workspace {
     project: Project,
     /// Environments assigned to the workspace.
     python_environments: HashMap<String, PythonEnvironment>,
-    /// Information about the platform.
+    /// A struct to contain useful platform data and objects.
     platform: Platform,
 }
 
@@ -605,7 +605,7 @@ pub struct DistInfo {
     wheel_file: Option<File>,
 }
 
-/// Data about the some platform.
+/// A struct to contain useful platform data and objects.
 pub struct Platform {
     /// The name of the platform.
     name: String,
