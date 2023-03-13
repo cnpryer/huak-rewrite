@@ -69,5 +69,5 @@ pub enum HuakError {
     #[error("a problem with utf-8 parsing occurred: {0}")]
     UTF8Error(#[from] std::str::Utf8Error),
     #[error("{0}")]
-    WrappedCommandError(String),
+    CommandError(String),
 }
