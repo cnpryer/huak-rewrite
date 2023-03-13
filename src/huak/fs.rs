@@ -7,7 +7,8 @@ use crate::error::HuakResult;
 
 /// Copy contents from one directory into a new directory at a provided `to` full path.
 /// If the `to` directory doesn't exist this function creates it.
-pub fn copy_dir(from: &Path, to: &Path) -> HuakResult<()> {
+pub fn copy_dir<T: AsRef<Path>>(from: T, to: T) -> HuakResult<()> {
+    let (from, to) = (from.as_ref(), to.as_ref());
     let mut stack = Vec::new();
     stack.push(PathBuf::from(from));
 
@@ -66,7 +67,7 @@ mod tests {
         let to = tempdir().unwrap().into_path();
         let from = crate::test_resources_dir_path().join("mock-project");
 
-        copy_dir(&from, &to.join("mock-project")).unwrap();
+        copy_dir(from, to.join("mock-project")).unwrap();
 
         assert!(to.join("mock-project").exists());
         assert!(to.join("mock-project").join("pyproject.toml").exists());
