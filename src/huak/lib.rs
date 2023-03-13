@@ -606,7 +606,7 @@ pub struct DistInfo {
 /// version as its key and the absolute path the the interpreter as the value.
 /// NOTE: This search implementation is inspired by brettcannon/python-launcher
 pub fn find_python_interpreter_paths() -> HashMap<Version, PathBuf> {
-    let paths = system::env_path_values();
+    let paths = fs::flatten_directories(system::env_path_values());
     let interpreters = all_python_interpreters_in_paths(paths);
     interpreters
 }
@@ -974,13 +974,9 @@ build-backend = "hatchling.build"
 
     #[test]
     fn python_search() {
-        let mut path_vals = system::env_path_values();
-        path_vals.insert(0, PathBuf::from("python3.11"));
-        path_vals.push(PathBuf::from("python3.10"));
-        let path_vals: Vec<String> = path_vals
-            .into_iter()
-            .map(|path| path.to_str().unwrap().to_string())
-            .collect();
+        let dir = tempdir().unwrap().into_path();
+        std::fs::write(dir.join("python3.11"), "").unwrap();
+        let path_vals = vec![dir.to_str().unwrap().to_string()];
         std::env::set_var("PATH", path_vals.join(":"));
         let interpreter_paths = find_python_interpreter_paths();
 
@@ -989,14 +985,7 @@ build-backend = "hatchling.build"
                 .get(&Version::from_str("3.11").unwrap())
                 .unwrap()
                 .deref(),
-            PathBuf::from("python3.11")
-        );
-        assert_eq!(
-            interpreter_paths
-                .get(&Version::from_str("3.10").unwrap())
-                .unwrap()
-                .deref(),
-            PathBuf::from("python3.10")
+            dir.join("python3.11")
         );
     }
 }
