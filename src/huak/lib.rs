@@ -403,16 +403,6 @@ impl PythonEnvironment {
         todo!()
     }
 
-    /// Run a list of values as a command with the Python environment as its context.
-    pub fn run_command_list(&self, list: &[&str]) {
-        todo!()
-    }
-
-    /// Run a string as a command with the Python environment as its context.
-    pub fn run_command_str(&self, string: &str) {
-        todo!()
-    }
-
     /// The absolute path to the system's executables directory.
     pub fn base_executables_dir_path(&self) -> &PathBuf {
         todo!()
