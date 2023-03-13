@@ -15,7 +15,6 @@ mod error;
 mod fs;
 mod git;
 mod operation;
-mod shell;
 mod system;
 
 const DEFAULT_VENV_NAME: &str = ".venv";
