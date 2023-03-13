@@ -2,21 +2,21 @@ use error::HuakResult;
 use pep440_rs::{Operator as VersionOperator, Version};
 use pyproject_toml::PyProjectToml as ProjectToml;
 use serde::{Deserialize, Serialize};
-use shell::Shell;
 use std::{
     collections::{hash_map::RandomState, HashMap},
-    ffi::OsString,
     fmt::Display,
     fs::File,
     path::{Path, PathBuf},
     str::FromStr,
 };
+use system::Platform;
 
 mod error;
 mod fs;
 mod git;
 mod operation;
 mod shell;
+mod system;
 
 const DEFAULT_VENV_NAME: &str = ".venv";
 const DEFAULT_PYPROJECT_TOML_CONTENTS: &str = r#"[project]
@@ -602,43 +602,11 @@ pub struct DistInfo {
     wheel_file: Option<File>,
 }
 
-/// A struct to contain useful platform data and objects.
-pub struct Platform {
-    /// The name of the platform.
-    name: String,
-    /// Absolute paths to each Python interpreter installed.
-    python_paths: HashMap<Version, PathBuf>,
-    /// A shell to use for the platform.
-    shell: Shell,
-}
-
-impl Platform {
-    /// Create a new platform.
-    pub fn new() -> Platform {
-        todo!()
-    }
-
-    /// Install a Python interpreter.
-    pub fn install_python(&mut self, version_str: &str) -> HuakResult<()> {
-        todo!()
-    }
-
-    /// Get the absolute path to a specific Python interpreter with a version &str.
-    pub fn python_path(&self, version_str: &str) -> Option<&PathBuf> {
-        todo!()
-    }
-
-    /// Get the absolute path to the latest version Python interpreter installed.
-    pub fn python_path_latest(&self) -> Option<&PathBuf> {
-        todo!()
-    }
-}
-
 /// Get a hashmap of Python interpreters. Each entry is stored with the interpreter's
 /// version as its key and the absolute path the the interpreter as the value.
 /// NOTE: This search implementation is inspired by brettcannon/python-launcher
 pub fn find_python_interpreter_paths() -> HashMap<Version, PathBuf> {
-    let paths = system_env_path_values();
+    let paths = system::env_path_values();
     let interpreters = all_python_interpreters_in_paths(paths);
     interpreters
 }
@@ -673,18 +641,6 @@ fn python_version_from_path(path: impl AsRef<Path>) -> Option<Version> {
 
 fn valid_python_interpreter_file_name(file_name: &str) -> bool {
     file_name.len() >= "python3.0".len() && file_name.starts_with("python")
-}
-
-/// Get a vector of paths from the system PATH environment variable.
-fn system_env_path_values() -> Vec<PathBuf> {
-    std::env::split_paths(&system_env_path_string()).collect()
-}
-
-fn system_env_path_string() -> OsString {
-    match std::env::var_os("PATH") {
-        Some(val) => val,
-        None => OsString::new(),
-    }
 }
 
 fn flatten_directories(
@@ -1028,15 +984,8 @@ build-backend = "hatchling.build"
     }
 
     #[test]
-    fn platform_shell_command() {
-        let platform = Platform::new();
-
-        todo!()
-    }
-
-    #[test]
-    fn system_python_search() {
-        let mut path_vals = system_env_path_values();
+    fn python_search() {
+        let mut path_vals = system::env_path_values();
         path_vals.insert(0, PathBuf::from("python3.11"));
         path_vals.push(PathBuf::from("python3.10"));
         let path_vals: Vec<String> = path_vals
