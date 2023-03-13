@@ -643,17 +643,6 @@ fn valid_python_interpreter_file_name(file_name: &str) -> bool {
     file_name.len() >= "python3.0".len() && file_name.starts_with("python")
 }
 
-fn flatten_directories(
-    directories: impl IntoIterator<Item = PathBuf>,
-) -> impl Iterator<Item = PathBuf> {
-    directories
-        .into_iter()
-        .filter_map(|p| p.read_dir().ok())
-        .flatten()
-        .filter_map(|e| e.ok())
-        .map(|e| e.path())
-}
-
 #[cfg(test)]
 mod tests {
     use std::ops::Deref;

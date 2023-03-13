@@ -44,6 +44,17 @@ pub fn copy_dir(from: &Path, to: &Path) -> HuakResult<()> {
     Ok(())
 }
 
+pub fn flatten_directories(
+    directories: impl IntoIterator<Item = PathBuf>,
+) -> impl Iterator<Item = PathBuf> {
+    directories
+        .into_iter()
+        .filter_map(|p| p.read_dir().ok())
+        .flatten()
+        .filter_map(|e| e.ok())
+        .map(|e| e.path())
+}
+
 #[cfg(test)]
 mod tests {
     use tempfile::tempdir;
