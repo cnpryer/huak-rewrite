@@ -1,6 +1,11 @@
-use crate::error::HuakResult;
+use crate::error::{HuakError, HuakResult};
 use pep440_rs::Version;
 use std::io::Write;
+#[cfg(unix)]
+use std::os::unix::io::AsRawFd;
+#[cfg(windows)]
+use std::os::windows::io::{AsRawHandle, FromRawHandle};
+use std::process::Command;
 use std::{collections::HashMap, ffi::OsString, path::PathBuf};
 use termcolor::{self, Color, ColorSpec, StandardStream, WriteColor};
 use termcolor::{
@@ -174,6 +179,11 @@ impl Terminal {
             TerminalOut::Stream { color_choice, .. } => color_choice,
             TerminalOut::Write(_) => ColorChoice::Never,
         }
+    }
+
+    /// Run a command from the terminal's context.
+    pub fn run_command(&mut self, cmd: &mut Command) -> HuakResult<()> {
+        todo!()
     }
 }
 
