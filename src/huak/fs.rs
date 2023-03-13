@@ -1,9 +1,8 @@
+use crate::error::HuakResult;
 use std::{
     fs,
     path::{Path, PathBuf},
 };
-
-use crate::error::HuakResult;
 
 /// Copy contents from one directory into a new directory at a provided `to` full path.
 /// If the `to` directory doesn't exist this function creates it.
