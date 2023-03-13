@@ -38,8 +38,8 @@ pub(crate) fn test_resources_dir_path() -> PathBuf {
 pub struct Workspace {
     /// A Python project part of the workspace.
     project: Project,
-    /// Environments assigned to the workspace.
-    python_environments: HashMap<String, PythonEnvironment>,
+    /// Python environments assigned to the workspace.
+    python_environments: HashMap<String, VirtualEnvironment>,
     /// A struct to contain useful platform data and objects.
     platform: Platform,
 }
@@ -67,7 +67,11 @@ impl Workspace {
     }
 
     /// Add an environment to the workspace.
-    pub fn add_python_environment(&mut self, name: &str, env: PythonEnvironment) -> HuakResult<()> {
+    pub fn add_python_environment(
+        &mut self,
+        name: &str,
+        env: VirtualEnvironment,
+    ) -> HuakResult<()> {
         todo!()
     }
 }
@@ -287,43 +291,36 @@ pub fn default_pyproject_toml_contents() -> &'static str {
     DEFAULT_PYPROJECT_TOML_CONTENTS
 }
 
-/// A PEP-compliant Python environment. Python environments have the following
-/// structure:
-///  lib
-///   └── pythonX.XX
-///     └── site-packages
-///       ├── some_pkg
-///       └── some_pkg-X.X.X.dist-info
-/// TODO: More Python environment documentation.
+/// A PEP-compliant Python virtual environment struct.
+///
+/// Virtual environments contain the following:
+///   executables directory (unix: bin; windows: Scripts)
+///   include (windows: Include)
+///   lib
+///    └── pythonX.Y
+///      └── site-packages (windows: Lib/site-packages)
+///        ├── some_pkg
+///        └── some_pkg-X.X.X.dist-info
+///   pyvenv.cfg
 #[derive(Default)]
-pub struct PythonEnvironment {
-    /// The environment's configuration data.
-    python_config: PythonEnvironmentConfig,
-    /// The absolute path to the environment's Python interpreter.
-    python_path: PathBuf,
-    /// The absolute path to the environment's executables directory.
-    python_exeutables_dir_path: PathBuf,
-    /// The absolute path to the environment's site-packages directory.
-    site_packages_dir_path: PathBuf,
-    /// The absolute path to the system executables directory.
-    base_exeutables_dir_path: PathBuf,
-    /// The absolute path to the system site-packages directory.
-    base_site_packages_dir_path: PathBuf,
+pub struct VirtualEnvironment {
+    /// Absolute path to the root of the virtual environment directory.
+    root: PathBuf,
 }
 
-impl PythonEnvironment {
-    /// Create a new `Environement`.
-    pub fn new() -> PythonEnvironment {
+impl VirtualEnvironment {
+    /// Create a new virtual environment.
+    pub fn new() -> VirtualEnvironment {
         todo!()
     }
 
-    /// Initialize a virtual environment from its absolute path.
-    pub fn venv(path: impl AsRef<Path>) -> HuakResult<PythonEnvironment> {
+    /// Create a virtual environment from its root path.
+    pub fn from_path(path: impl AsRef<Path>) -> HuakResult<VirtualEnvironment> {
         todo!()
     }
 
     /// Create a Python virtual environment on the system.
-    pub fn create_venv() -> HuakResult<()> {
+    pub fn create() -> HuakResult<()> {
         todo!()
     }
 
@@ -332,7 +329,7 @@ impl PythonEnvironment {
         todo!()
     }
 
-    pub fn python_environment_config(&self) -> PythonEnvironmentConfig {
+    pub fn python_environment_config(&self) -> VirtualEnvironmentConfig {
         todo!()
     }
 
@@ -443,7 +440,7 @@ impl PythonEnvironment {
 
 /// Data about some environment's Python configuration. This abstraction is modeled after
 /// the pyenv.cfg file used for Python virtual environments.
-pub struct PythonEnvironmentConfig {
+pub struct VirtualEnvironmentConfig {
     /// Path to directory containing the Python installation used to create the
     /// environment.
     home: PathBuf,
@@ -454,14 +451,14 @@ pub struct PythonEnvironmentConfig {
     version: Option<Version>,
 }
 
-impl ToString for PythonEnvironmentConfig {
-    /// Convert the `PythonEnvironmentConfig` to str.
+impl ToString for VirtualEnvironmentConfig {
+    /// Convert the `VirtualEnvironmentConfig` to str.
     fn to_string(&self) -> String {
         todo!()
     }
 }
 
-impl Default for PythonEnvironmentConfig {
+impl Default for VirtualEnvironmentConfig {
     fn default() -> Self {
         Self {
             home: Default::default(),
@@ -854,7 +851,7 @@ build-backend = "hatchling.build"
 
     #[test]
     fn python_environment_default() {
-        let python_environment = PythonEnvironment::default();
+        let python_environment = VirtualEnvironment::default();
 
         assert!(python_environment.is_valid());
         assert_eq!(
@@ -874,7 +871,7 @@ build-backend = "hatchling.build"
     /// NOTE: This test depends on local virtual environment.
     fn python_environment_executable_dir_name() {
         let python_environment =
-            PythonEnvironment::venv(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(".venv"))
+            VirtualEnvironment::from_path(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(".venv"))
                 .unwrap();
 
         assert!(python_environment.python_executables_dir_path().exists());
@@ -894,7 +891,7 @@ build-backend = "hatchling.build"
     /// NOTE: This test depends on local virtual environment.
     fn python_environment_python_config() {
         let python_environment =
-            PythonEnvironment::venv(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(".venv"))
+            VirtualEnvironment::from_path(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(".venv"))
                 .unwrap();
         let venv_root = python_environment
             .python_path()

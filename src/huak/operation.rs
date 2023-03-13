@@ -1,10 +1,10 @@
 ///! This module &Workspaceimplements various operations to interact with valid workspaces
 ///! existing on a system.
-use crate::{error::HuakResult, Package, PythonEnvironment, Workspace};
+use crate::{error::HuakResult, Package, VirtualEnvironment, Workspace};
 use std::path::Path;
 
 /// Activate a Python virtual environment.
-pub fn activate_venv(env: PythonEnvironment) -> HuakResult<()> {
+pub fn activate_venv(env: VirtualEnvironment) -> HuakResult<()> {
     todo!()
 }
 
@@ -204,7 +204,7 @@ mod tests {
         crate::fs::copy_dir(&test_resources_dir_path().join("mock-project"), &dir).unwrap();
 
         let mut ws = Workspace::from_path(dir.join("mock-project")).unwrap();
-        let python_environment = PythonEnvironment::venv(".venv").unwrap();
+        let python_environment = VirtualEnvironment::from_path(".venv").unwrap();
         ws.add_python_environment("default", python_environment)
             .unwrap();
 

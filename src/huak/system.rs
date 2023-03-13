@@ -1,10 +1,6 @@
-use crate::error::{HuakError, HuakResult};
+use crate::error::HuakResult;
 use pep440_rs::Version;
 use std::io::Write;
-#[cfg(unix)]
-use std::os::unix::io::AsRawFd;
-#[cfg(windows)]
-use std::os::windows::io::{AsRawHandle, FromRawHandle};
 use std::process::Command;
 use std::{collections::HashMap, ffi::OsString, path::PathBuf};
 use termcolor::{self, Color, ColorSpec, StandardStream, WriteColor};
