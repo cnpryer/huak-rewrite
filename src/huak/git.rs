@@ -2,7 +2,7 @@ use crate::error::HuakResult;
 use std::path::Path;
 
 /// Initialize a directory on a local system as a git repository.
-pub fn init_git(dir_path: impl AsRef<Path>) -> HuakResult<()> {
+pub fn init(dir_path: impl AsRef<Path>) -> HuakResult<()> {
     todo!()
 }
 
@@ -11,7 +11,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_init_git() {
+    fn test_init() {
         todo!()
     }
 }
