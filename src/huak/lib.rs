@@ -155,11 +155,6 @@ impl Project {
     fn remove_optional_dependency(&self, group: &str, package_name: &str) {
         todo!()
     }
-
-    /// Check if the project is setup correctly.
-    fn is_valid(&self) -> bool {
-        todo!()
-    }
 }
 
 /// A project type might indicate if a project is an application-like project or a
@@ -279,11 +274,6 @@ impl PyProjectToml {
     /// Convert the toml to a string as-is.
     pub fn to_string(&self) -> HuakResult<String> {
         Ok(toml_edit::ser::to_string(&self)?)
-    }
-
-    /// Check if the project is setup correctly.
-    pub fn is_valid(&self) -> bool {
-        todo!()
     }
 }
 
@@ -651,13 +641,8 @@ mod tests {
         let lib = Project::new_lib();
         let app = Project::new_app();
 
-        assert!(default_project.is_valid());
         assert_eq!(default_project.project_type, ProjectType::default());
-
-        assert!(lib.is_valid());
         assert_eq!(lib.project_type, ProjectType::Library);
-
-        assert!(app.is_valid());
         assert_eq!(app.project_type, ProjectType::Application);
     }
 
@@ -668,7 +653,6 @@ mod tests {
             .join("pyproject.toml");
         let ptoml = PyProjectToml::from_path(&path).unwrap();
 
-        assert!(ptoml.is_valid());
         assert_eq!(ptoml.project_name(), "mock_project");
         assert_eq!(ptoml.project_version(), "0.0.1");
     }
@@ -678,7 +662,6 @@ mod tests {
         let default_toml = PyProjectToml::default();
         let default_toml_str = default_toml.to_string_pretty().unwrap();
 
-        assert!(!default_toml.is_valid());
         assert_eq!(
             default_toml_str,
             r#"[project]
