@@ -1,6 +1,6 @@
 ///! This module &Workspaceimplements various operations to interact with valid workspaces
 ///! existing on a system.
-use crate::{error::HuakResult, Package, PythonEnvironment, VirtualEnvironment, Workspace};
+use crate::{error::HuakResult, Package, Workspace};
 use std::path::Path;
 
 /// Activate a Python virtual environment.
@@ -126,7 +126,7 @@ mod tests {
 
     use tempfile::tempdir;
 
-    use crate::{test_resources_dir_path, PyProjectToml};
+    use crate::{test_resources_dir_path, PyProjectToml, VirtualEnvironment};
 
     use super::*;
 

@@ -302,55 +302,6 @@ pub fn default_pyproject_toml_contents() -> &'static str {
 ///        ├── some_pkg
 ///        └── some_pkg-X.X.X.dist-info
 ///   pyvenv.cfg
-pub trait PythonEnvironment {
-    /// Create a Python virtual environment on the system.
-    fn create(&self) -> HuakResult<()>;
-    /// The absolute path to the Python environment's python interpreter binary.
-    fn python_path(&self) -> PathBuf;
-    /// The version of the Python environment's Python interpreter.
-    fn python_version(&self) -> &Version;
-    /// The absolute path to the Python interpreter used to create the Python
-    /// environment.
-    fn base_python_path(&self) -> PathBuf;
-    /// The version of the Python interpreter used to create the Python environment.
-    fn base_python_version(&self) -> &Version;
-    /// The absolute path to the Python environment's executables directory.
-    fn executables_dir_path(&self) -> PathBuf;
-    /// The absolute path to the system's executables directory.
-    fn base_executables_dir_path(&self) -> PathBuf;
-    /// The absolute path to the Python environment's site-packages directory.
-    fn site_packages_dir_path(&self) -> PathBuf;
-    /// The absolute path to the system's site-packages directory.
-    fn base_site_packages_dir_path(&self) -> PathBuf;
-    /// Install a Python package to the environment.
-    fn install_package(&mut self, package: &Package) -> HuakResult<()>;
-    /// Uninstall a Python package from the environment.
-    fn uninstall_package(&mut self, package_name: &str) -> HuakResult<()>;
-    /// Get a package from the site-packages directory if it is already installed.
-    fn find_site_packages_package(&self, package_name: &str) -> Option<Package>;
-    /// Get a package's dist info from the site-packages directory if it is there.
-    fn find_site_packages_dist_info(&self, package_name: &str) -> Option<DistInfo>;
-    /// Get a package from the system's site-packages directory if it is already
-    /// installed.
-    fn find_base_site_packages_package(&self, package_name: &str) -> Option<Package>;
-    /// Get a package's dist info from the system's site-packages directory if it is
-    /// there.
-    fn find_base_site_packages_dist_info(&self, package_name: &str) -> Option<DistInfo>;
-    /// Add a package to the site-packages directory.
-    fn add_package_to_site_packages(&mut self, package: &Package) -> HuakResult<()>;
-    /// Add a package to the system's site-packages directory.
-    fn add_package_to_base_site_packages(&mut self, package: &Package) -> HuakResult<()>;
-    /// Remove a package from the site-packages directory.
-    fn remove_package_from_site_packages(&mut self, package: &Package) -> HuakResult<()>;
-    /// Remove a package from the system's site-packages directory.
-    fn remove_package_from_base_site_packages(&mut self, package: &Package) -> HuakResult<()>;
-    /// Check if the Python environment is isolated from any system site-packages
-    /// directory.
-    fn is_isolated(&self) -> &bool;
-    /// Activate the Python environment with the system shell.
-    fn activate(&self) -> HuakResult<()>;
-}
-
 #[derive(Default)]
 pub struct VirtualEnvironment {
     /// Absolute path to the root of the virtual environment directory.
@@ -373,119 +324,112 @@ impl VirtualEnvironment {
         todo!()
     }
 
-    /// Check if the `Environment` is configured properly.
-    fn is_valid(&self) -> bool {
-        todo!()
-    }
-}
-
-impl PythonEnvironment for VirtualEnvironment {
     /// Create a Python virtual environment on the system.
-    fn create(&self) -> HuakResult<()> {
+    pub fn create(&self) -> HuakResult<()> {
         todo!()
     }
 
     /// The absolute path to the Python environment's python interpreter binary.
-    fn python_path(&self) -> PathBuf {
+    pub fn python_path(&self) -> PathBuf {
         todo!()
     }
 
     /// The version of the Python environment's Python interpreter.
-    fn python_version(&self) -> &Version {
+    pub fn python_version(&self) -> &Version {
         todo!()
     }
 
     /// The absolute path to the Python interpreter used to create the Python
     /// environment.
-    fn base_python_path(&self) -> PathBuf {
+    pub fn base_python_path(&self) -> PathBuf {
         todo!()
     }
 
     /// The version of the Python interpreter used to create the Python environment.
-    fn base_python_version(&self) -> &Version {
+    pub fn base_python_version(&self) -> &Version {
         todo!()
     }
 
     /// The absolute path to the Python environment's executables directory.
-    fn executables_dir_path(&self) -> PathBuf {
+    pub fn executables_dir_path(&self) -> PathBuf {
         todo!()
     }
 
     /// The absolute path to the system's executables directory.
-    fn base_executables_dir_path(&self) -> PathBuf {
+    pub fn base_executables_dir_path(&self) -> PathBuf {
         todo!()
     }
 
     /// The absolute path to the Python environment's site-packages directory.
-    fn site_packages_dir_path(&self) -> PathBuf {
+    pub fn site_packages_dir_path(&self) -> PathBuf {
         todo!()
     }
 
     /// The absolute path to the system's site-packages directory.
-    fn base_site_packages_dir_path(&self) -> PathBuf {
+    pub fn base_site_packages_dir_path(&self) -> PathBuf {
         todo!()
     }
 
     /// Install a Python package to the environment.
-    fn install_package(&mut self, package: &Package) -> HuakResult<()> {
+    pub fn install_package(&mut self, package: &Package) -> HuakResult<()> {
         todo!()
     }
 
     /// Uninstall a Python package from the environment.
-    fn uninstall_package(&mut self, package_name: &str) -> HuakResult<()> {
+    pub fn uninstall_package(&mut self, package_name: &str) -> HuakResult<()> {
         todo!()
     }
 
     /// Get a package from the site-packages directory if it is already installed.
-    fn find_site_packages_package(&self, name: &str) -> Option<Package> {
+    pub fn find_site_packages_package(&self, name: &str) -> Option<Package> {
         todo!()
     }
 
     /// Get a package's dist info from the site-packages directory if it is there.
-    fn find_site_packages_dist_info(&self, name: &str) -> Option<DistInfo> {
+    pub fn find_site_packages_dist_info(&self, name: &str) -> Option<DistInfo> {
         todo!()
     }
 
     /// Get a package from the system's site-packages directory if it is already
     /// installed.
-    fn find_base_site_packages_package(&self, name: &str) -> Option<Package> {
+    pub fn find_base_site_packages_package(&self, name: &str) -> Option<Package> {
         todo!()
     }
 
     /// Get a package's dist info from the system's site-packages directory if it is
     /// there.
-    fn find_base_site_packages_dist_info(&self, name: &str) -> Option<DistInfo> {
+    pub fn find_base_site_packages_dist_info(&self, name: &str) -> Option<DistInfo> {
         todo!()
     }
 
     /// Add a package to the site-packages directory.
-    fn add_package_to_site_packages(&mut self, package: &Package) -> HuakResult<()> {
+    pub fn add_package_to_site_packages(&mut self, package: &Package) -> HuakResult<()> {
         todo!()
     }
 
     /// Add a package to the system's site-packages directory.
-    fn add_package_to_base_site_packages(&mut self, package: &Package) -> HuakResult<()> {
+    pub fn add_package_to_base_site_packages(&mut self, package: &Package) -> HuakResult<()> {
         todo!()
     }
 
     /// Remove a package from the site-packages directory.
-    fn remove_package_from_site_packages(&mut self, package: &Package) -> HuakResult<()> {
+    pub fn remove_package_from_site_packages(&mut self, package: &Package) -> HuakResult<()> {
         todo!()
     }
 
     /// Remove a package from the system's site-packages directory.
-    fn remove_package_from_base_site_packages(&mut self, package: &Package) -> HuakResult<()> {
+    pub fn remove_package_from_base_site_packages(&mut self, package: &Package) -> HuakResult<()> {
         todo!()
     }
 
     /// Check if the Python environment is isolated from any system site-packages
     /// directory.
-    fn is_isolated(&self) -> &bool {
+    pub fn is_isolated(&self) -> &bool {
         todo!()
     }
 
     /// Activate the Python environment with the system shell.
-    fn activate(&self) -> HuakResult<()> {
+    pub fn activate(&self) -> HuakResult<()> {
         todo!()
     }
 }
@@ -905,7 +849,6 @@ build-backend = "hatchling.build"
     fn python_environment_default() {
         let python_environment = VirtualEnvironment::default();
 
-        assert!(python_environment.is_valid());
         assert_eq!(
             python_environment
                 .python_path()
