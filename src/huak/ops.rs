@@ -1,4 +1,4 @@
-///! This module &Workspaceimplements various operations to interact with valid workspaces
+///! This module implements various operations to interact with valid workspaces
 ///! existing on a system.
 use crate::{error::HuakResult, Package, Workspace};
 use std::path::Path;
