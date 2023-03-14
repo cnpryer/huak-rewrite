@@ -122,7 +122,7 @@ pub fn display_project_version(workspace: &Workspace) -> HuakResult<()> {
 ///       To run some of these tests a .venv must be available at the project's root.
 #[cfg(test)]
 mod tests {
-    use std::{borrow::BorrowMut, path::PathBuf, str::FromStr};
+    use std::str::FromStr;
 
     use tempfile::tempdir;
 
