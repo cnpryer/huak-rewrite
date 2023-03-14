@@ -39,6 +39,11 @@ impl Platform {
     pub fn python_path_latest(&self) -> Option<&PathBuf> {
         todo!()
     }
+
+    /// Get a reference to the platform's terminal.
+    pub fn terminal(&self) -> &Terminal {
+        &self.terminal
+    }
 }
 
 /// Get a vector of paths from the system PATH environment variable.

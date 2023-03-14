@@ -1,15 +1,30 @@
 ///! This module implements various operations to interact with valid workspaces
 ///! existing on a system.
-use crate::{error::HuakResult, Package, Workspace};
+use crate::{
+    error::{HuakError, HuakResult},
+    DependencyResolver, Package, Workspace,
+};
 use std::path::Path;
 
 /// Activate a Python virtual environment.
-pub fn activate_venv(ws: &Workspace) -> HuakResult<()> {
-    todo!()
+pub fn activate_venv(workspace: &Workspace) -> HuakResult<()> {
+    let env = match workspace.python_environments.get("default") {
+        Some(it) => it,
+        None => return Err(HuakError::PyVenvNotFoundError),
+    };
+
+    env.activate_with(workspace.platform.terminal())
 }
 
 /// Add Python packages as a dependencies to a Python project.
-pub fn add_project_dependencies(workspace: &Workspace, dependencies: &[Package]) -> HuakResult<()> {
+pub fn add_project_dependencies(
+    workspace: &mut Workspace,
+    dependencies: &[Package],
+) -> HuakResult<()> {
+    let resolver = DependencyResolver::new()
+        .with_dependencies(dependencies)?
+        .resolve();
+
     todo!()
 }
 

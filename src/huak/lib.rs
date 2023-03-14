@@ -9,7 +9,7 @@ use std::{
     path::{Path, PathBuf},
     str::FromStr,
 };
-use sys::Platform;
+use sys::{Platform, Terminal};
 
 mod error;
 mod fs;
@@ -422,6 +422,37 @@ impl VirtualEnvironment {
     pub fn activate(&self) -> HuakResult<()> {
         todo!()
     }
+
+    /// Activate the Python environment with a given shell.
+    pub fn activate_with(&self, terminal: &Terminal) -> HuakResult<()> {
+        todo!()
+    }
+}
+
+/// A struct for managing resolving dependencies.
+pub struct DependencyResolver {
+    dependencies: Vec<Package>,
+}
+
+impl DependencyResolver {
+    pub fn new() -> DependencyResolver {
+        DependencyResolver {
+            dependencies: Vec::new(),
+        }
+    }
+
+    pub fn with_dependencies(
+        &mut self,
+        dependencies: &[Package],
+    ) -> HuakResult<DependencyResolver> {
+        self.dependencies = dependencies.to_vec();
+
+        Ok(*self)
+    }
+
+    pub fn resolve(&mut self) -> HuakResult<DependencyResolver> {
+        todo!()
+    }
 }
 
 /// Data about some environment's Python configuration. This abstraction is modeled after
@@ -455,6 +486,7 @@ impl Default for VirtualEnvironmentConfig {
 }
 
 /// The python package compliant with packaging.python.og.
+#[derive(Clone)]
 pub struct Package {
     /// Name designated to the package by the author(s).
     name: String,
@@ -469,8 +501,6 @@ pub struct Package {
     version_operator: VersionOperator,
     /// Tags used to indicate platform compatibility.
     platform_tags: Vec<PlatformTag>,
-    /// The package's distribtion info.
-    distribution_info: Option<DistInfo>,
 }
 
 impl Package {
@@ -541,12 +571,12 @@ impl Eq for Package {}
 
 /// Core package metadata.
 /// https://packaging.python.org/en/latest/specifications/core-metadata/
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub struct PackageMetadata;
 
 /// Tags used to indicate platform compatibility.
 /// https://packaging.python.org/en/latest/specifications/platform-compatibility-tags/
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub enum PlatformTag {}
 
 /// Package distribtion info stored in the site-packages directory adjacent to the
