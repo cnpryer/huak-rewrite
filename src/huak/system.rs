@@ -266,7 +266,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn platform_shell_command() {
+    fn platform_terminal_command() {
         let platform = Platform::new();
 
         todo!()
