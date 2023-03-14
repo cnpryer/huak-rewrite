@@ -1,10 +1,10 @@
 ///! This module &Workspaceimplements various operations to interact with valid workspaces
 ///! existing on a system.
-use crate::{error::HuakResult, Package, VirtualEnvironment, Workspace};
+use crate::{error::HuakResult, Package, PythonEnvironment, VirtualEnvironment, Workspace};
 use std::path::Path;
 
 /// Activate a Python virtual environment.
-pub fn activate_venv(env: VirtualEnvironment) -> HuakResult<()> {
+pub fn activate_venv(ws: &Workspace) -> HuakResult<()> {
     todo!()
 }
 
