@@ -9,13 +9,13 @@ use std::{
     path::{Path, PathBuf},
     str::FromStr,
 };
-use system::Platform;
+use sys::Platform;
 
 mod error;
 mod fs;
 mod git;
-mod operation;
-mod system;
+mod ops;
+mod sys;
 
 const DEFAULT_VENV_NAME: &str = ".venv";
 const DEFAULT_PYPROJECT_TOML_CONTENTS: &str = r#"[project]
@@ -578,7 +578,7 @@ pub struct DistInfo {
 /// version as its key and the absolute path the the interpreter as the value.
 /// NOTE: This search implementation is inspired by brettcannon/python-launcher
 pub fn find_python_interpreter_paths() -> HashMap<Version, PathBuf> {
-    let paths = fs::flatten_directories(system::env_path_values());
+    let paths = fs::flatten_directories(sys::env_path_values());
     let interpreters = all_python_interpreters_in_paths(paths);
     interpreters
 }
