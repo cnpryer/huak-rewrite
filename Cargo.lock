@@ -331,7 +331,6 @@ dependencies = [
  "pyproject-toml",
  "reqwest",
  "serde",
- "serde_derive",
  "serde_json",
  "tempfile",
  "termcolor",

@@ -1,7 +1,7 @@
 use error::{HuakError, HuakResult};
 use pep440_rs::{Operator as VersionOperator, Version};
 use pyproject_toml::PyProjectToml as ProjectToml;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::{
     collections::{hash_map::RandomState, HashMap},
     fmt::Display,
