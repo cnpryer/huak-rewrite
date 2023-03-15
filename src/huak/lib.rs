@@ -411,8 +411,8 @@ impl VirtualEnvironment {
         todo!()
     }
 
-    /// Activate the Python environment with a given shell.
-    pub fn activate_with(&self, terminal: &Terminal) -> HuakResult<()> {
+    /// Activate the Python environment with a given terminal.
+    pub fn activate_with_terminal(&self, terminal: &Terminal) -> HuakResult<()> {
         todo!()
     }
 

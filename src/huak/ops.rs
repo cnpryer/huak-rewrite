@@ -119,7 +119,7 @@ impl<'a> Iterator for &'a PublishOptions {
 pub fn activate_venv(config: &OperationConfig) -> HuakResult<()> {
     let venv = VirtualEnvironment::find(Some(config.root()))?;
     let terminal = Terminal::new();
-    venv.activate_with(&terminal)
+    venv.activate_with_terminal(&terminal)
 }
 
 /// Add Python packages as a dependencies to a Python project.
