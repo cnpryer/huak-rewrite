@@ -1,4 +1,4 @@
-use error::{HuakError, HuakResult};
+use error::HuakResult;
 use pep440_rs::{Operator as VersionOperator, Version};
 use pyproject_toml::PyProjectToml as ProjectToml;
 use serde::{Deserialize, Serialize};
@@ -9,7 +9,7 @@ use std::{
     path::{Path, PathBuf},
     str::FromStr,
 };
-use sys::{Platform, Terminal};
+use sys::Terminal;
 
 mod error;
 mod fs;
@@ -343,8 +343,18 @@ impl VirtualEnvironment {
         todo!()
     }
 
+    /// Install many Python packages to the environment.
+    pub fn install_packages(&mut self, packages: &[Package]) -> HuakResult<()> {
+        todo!()
+    }
+
     /// Uninstall a Python package from the environment.
     pub fn uninstall_package(&mut self, package_name: &str) -> HuakResult<()> {
+        todo!()
+    }
+
+    /// Uninstall many Python packages from the environment.
+    pub fn uninstall_packages(&mut self, package_names: &[&str]) -> HuakResult<()> {
         todo!()
     }
 
@@ -410,30 +420,42 @@ impl VirtualEnvironment {
     pub fn installed_packages(&self) -> HuakResult<Vec<Package>> {
         todo!()
     }
+
+    /// Get the environment's installer.
+    pub fn installer() -> Installer {
+        Installer {
+            packages: Vec::new(),
+        }
+    }
 }
 
-/// A struct for managing resolving dependencies.
-pub struct DependencyResolver {
-    dependencies: Vec<Package>,
+/// A struct for managing installing packages.
+pub struct Installer {
+    /// Staged packages to install.
+    packages: Vec<Package>,
 }
 
-impl DependencyResolver {
-    pub fn new() -> DependencyResolver {
-        DependencyResolver {
-            dependencies: Vec::new(),
+impl Installer {
+    pub fn new() -> Installer {
+        Installer {
+            packages: Vec::new(),
         }
     }
 
-    pub fn dependencies(&self) -> &Vec<Package> {
-        &self.dependencies
+    pub fn packages(&self) -> &Vec<Package> {
+        &self.packages
     }
 
-    pub fn with_dependencies(&mut self, dependencies: &[Package]) -> &mut DependencyResolver {
-        self.dependencies = dependencies.to_vec();
+    pub fn with_packages(&mut self, packages: &[Package]) -> &mut Installer {
+        self.packages = packages.to_vec();
         self
     }
 
-    pub fn resolve(&mut self) -> HuakResult<DependencyResolver> {
+    pub fn install_all(&self) -> HuakResult<()> {
+        todo!()
+    }
+
+    pub fn install(&mut self) -> HuakResult<()> {
         todo!()
     }
 }

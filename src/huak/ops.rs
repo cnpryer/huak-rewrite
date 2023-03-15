@@ -3,10 +3,9 @@
 use crate::{
     error::{HuakError, HuakResult},
     sys::{self, Terminal},
-    DependencyResolver, Package, Project, PyProjectToml, VirtualEnvironment,
+    Package, Project, PyProjectToml, VirtualEnvironment,
 };
 use std::{
-    collections::HashMap,
     path::{Path, PathBuf},
     process::Command,
 };
@@ -110,18 +109,13 @@ pub fn add_project_dependencies(
     let mut venv = VirtualEnvironment::find(Some(config.root()))?;
     let mut packages = venv.installed_packages()?;
     packages.extend_from_slice(dependencies);
-    let resolver = DependencyResolver::new()
-        .with_dependencies(dependencies)
-        .resolve()
-        .map_err(|e| HuakError::DependencyResolutionError(e.to_string()))?;
+    venv.install_packages(&packages)?;
     let manifest_path = config.root().join("pyproject.toml");
     let mut project = Project::from_manifest(&manifest_path)?;
-    for package in resolver.dependencies() {
-        venv.install_package(package);
+    for package in &packages {
         project.add_dependency(package);
     }
-    project.pyproject_toml().write_file(&manifest_path)?;
-    Ok(())
+    project.pyproject_toml().write_file(&manifest_path)
 }
 
 /// Add Python packages as optional dependencies to a Python project.
@@ -133,18 +127,13 @@ pub fn add_project_optional_dependencies(
     let mut venv = VirtualEnvironment::find(Some(config.root()))?;
     let mut packages = venv.installed_packages()?;
     packages.extend_from_slice(dependencies);
-    let resolver = DependencyResolver::new()
-        .with_dependencies(dependencies)
-        .resolve()
-        .map_err(|e| HuakError::DependencyResolutionError(e.to_string()))?;
+    venv.install_packages(&packages)?;
     let manifest_path = config.root().join("pyproject.toml");
     let mut project = Project::from_manifest(&manifest_path)?;
-    for package in resolver.dependencies() {
-        venv.install_package(package)?;
+    for package in &packages {
         project.add_optional_dependency(package, group);
     }
-    project.pyproject_toml().write_file(&manifest_path)?;
-    Ok(())
+    project.pyproject_toml().write_file(&manifest_path)
 }
 
 /// Build the Python project as installable package.
@@ -154,10 +143,12 @@ pub fn build_project(config: &OperationConfig) -> HuakResult<()> {
     let mut paths = sys::env_path_values();
     paths.insert(0, venv.root().to_path_buf());
     let mut cmd = Command::new("build");
-    let mut cmd = cmd.env(
-        "PATH",
-        std::env::join_paths(paths).map_err(|e| HuakError::InternalError(e.to_string()))?,
-    );
+    let mut cmd = cmd
+        .env(
+            "PATH",
+            std::env::join_paths(paths).map_err(|e| HuakError::InternalError(e.to_string()))?,
+        )
+        .current_dir(config.root());
     let build_options = match config.build_options() {
         Some(it) => it,
         None => return Err(HuakError::BuildOptionsMissingError),
@@ -180,10 +171,13 @@ pub fn format_project(config: &OperationConfig) -> HuakResult<()> {
     let mut paths = sys::env_path_values();
     paths.insert(0, venv.root().to_path_buf());
     let mut cmd = Command::new("black");
-    let mut cmd = cmd.env(
-        "PATH",
-        std::env::join_paths(paths).map_err(|e| HuakError::InternalError(e.to_string()))?,
-    );
+    let mut cmd = cmd
+        .env(
+            "PATH",
+            std::env::join_paths(paths).map_err(|e| HuakError::InternalError(e.to_string()))?,
+        )
+        .current_dir(config.root())
+        .arg(".");
     let format_options = match config.format_options() {
         Some(it) => it,
         None => return Err(HuakError::BuildOptionsMissingError),
@@ -205,11 +199,8 @@ pub fn init_project(config: &OperationConfig) -> HuakResult<()> {
 pub fn install_project_dependencies(config: &OperationConfig) -> HuakResult<()> {
     let mut venv = VirtualEnvironment::find(Some(config.root()))?;
     let project = Project::from_manifest(config.root().join("pyproject.toml"))?;
-    let dependencies = project.dependencies();
-    for package in dependencies {
-        venv.install_package(package);
-    }
-    Ok(())
+    let packages = project.dependencies();
+    venv.install_packages(packages)
 }
 
 /// Install groups of a Python project's optional dependencies to an environment.
@@ -219,11 +210,8 @@ pub fn install_project_optional_dependencies(
 ) -> HuakResult<()> {
     let mut venv = VirtualEnvironment::find(Some(config.root()))?;
     let project = Project::from_manifest(config.root().join("pyproject.toml"))?;
-    let dependencies = project.optional_dependencey_group(group);
-    for package in dependencies {
-        venv.install_package(package);
-    }
-    Ok(())
+    let packages = project.optional_dependencey_group(group);
+    venv.install_packages(packages)
 }
 
 /// Lint a Python project's source code.
@@ -233,10 +221,13 @@ pub fn lint_project(config: &OperationConfig) -> HuakResult<()> {
     let mut paths = sys::env_path_values();
     paths.insert(0, venv.root().to_path_buf());
     let mut cmd = Command::new("ruff");
-    let mut cmd = cmd.env(
-        "PATH",
-        std::env::join_paths(paths).map_err(|e| HuakError::InternalError(e.to_string()))?,
-    );
+    let mut cmd = cmd
+        .env(
+            "PATH",
+            std::env::join_paths(paths).map_err(|e| HuakError::InternalError(e.to_string()))?,
+        )
+        .current_dir(config.root())
+        .arg(".");
     let lint_options = match config.lint_options() {
         Some(it) => it,
         None => return Err(HuakError::BuildOptionsMissingError),
@@ -259,6 +250,8 @@ pub fn fix_project_lints(config: &OperationConfig) -> HuakResult<()> {
             "PATH",
             std::env::join_paths(paths).map_err(|e| HuakError::InternalError(e.to_string()))?,
         )
+        .current_dir(config.root())
+        .arg(".")
         .arg("--fix");
     let lint_options = match config.lint_options() {
         Some(it) => it,
