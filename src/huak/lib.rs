@@ -1,4 +1,4 @@
-use error::HuakResult;
+use error::{HuakError, HuakResult};
 use pep440_rs::{Operator as VersionOperator, Version};
 use pyproject_toml::PyProjectToml as ProjectToml;
 use serde::{Deserialize, Serialize};
@@ -34,48 +34,6 @@ pub(crate) fn test_resources_dir_path() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources")
 }
 
-/// An abstraction containing information about the workspace.
-pub struct Workspace {
-    /// A Python project part of the workspace.
-    project: Project,
-    /// Python environments assigned to the workspace.
-    python_environments: HashMap<String, VirtualEnvironment>,
-    /// A struct to contain useful platform data and objects.
-    platform: Platform,
-}
-
-impl Workspace {
-    /// Create a new workspace.
-    pub fn new() -> Workspace {
-        Workspace {
-            project: Project::new(),
-            python_environments: HashMap::new(),
-            platform: Platform::new(),
-        }
-    }
-
-    /// Initialize a workspace from a directory path by attempting to locate
-    /// a valid manifest file. If no manifest file is found then the workspace
-    /// project root is assumed to be at the current working directory.
-    pub fn from_path(dir_path: impl AsRef<Path>) -> HuakResult<Workspace> {
-        todo!()
-    }
-
-    /// Get the workspace project.
-    pub fn project(&self) -> &Project {
-        &self.project
-    }
-
-    /// Add an environment to the workspace.
-    pub fn add_python_environment(
-        &mut self,
-        name: &str,
-        env: VirtualEnvironment,
-    ) -> HuakResult<()> {
-        todo!()
-    }
-}
-
 /// A Python project can be anything from a script to automate some process to a
 /// production web application. Projects consist of Python source code and a
 /// project-marking `pyproject.toml` file. PEPs provide Python’s ecosystem with
@@ -99,6 +57,11 @@ pub struct Project {
 impl Project {
     /// Create a new project.
     pub fn new() -> Project {
+        todo!()
+    }
+
+    /// Create a project from its manifest file path.
+    pub fn from_manifest(path: impl AsRef<Path>) -> HuakResult<Project> {
         todo!()
     }
 
@@ -127,32 +90,37 @@ impl Project {
     }
 
     /// Get the Python project's main dependencies.
-    fn dependencies(&self) -> &Vec<Package> {
+    pub fn dependencies(&self) -> &Vec<Package> {
         todo!()
     }
 
     /// Get a group of optional dependencies from the Python project.
-    fn optional_dependencey_group(&self, group: &str) -> &Vec<Package> {
+    pub fn optional_dependencey_group(&self, group: &str) -> &Vec<Package> {
         todo!()
     }
 
     /// Add a Python package as a dependency to the project.
-    fn add_dependency(&mut self, package: Package) {
+    pub fn add_dependency(&mut self, package: &Package) {
         todo!()
     }
 
     /// Add a Python package as a dependency to the project.
-    fn add_optional_dependency(&mut self, group: &str, package: Package) {
+    pub fn add_optional_dependency(&mut self, package: &Package, group: &str) {
         todo!()
     }
 
     /// Remove a dependency from the project.
-    fn remove_dependency(&mut self, package_name: &str) {
+    pub fn remove_dependency(&mut self, package_name: &str) {
         todo!()
     }
 
     /// Remove an optional dependency from the project.
-    fn remove_optional_dependency(&self, group: &str, package_name: &str) {
+    pub fn remove_optional_dependency(&self, package_name: &str, group: &str) {
+        todo!()
+    }
+
+    /// Write the current project to some directory path.
+    pub fn write_project(&self, dir_path: impl AsRef<Path>) -> HuakResult<()> {
         todo!()
     }
 }
@@ -304,8 +272,18 @@ impl VirtualEnvironment {
         todo!()
     }
 
+    /// Get a reference to the absolute path to the virtual environment.
+    pub fn root(&self) -> &PathBuf {
+        &self.root
+    }
+
     /// Create a virtual environment from its root path.
     pub fn from_path(path: impl AsRef<Path>) -> HuakResult<VirtualEnvironment> {
+        todo!()
+    }
+
+    /// Find the virtual environment from some path.
+    pub fn find(from: Option<impl AsRef<Path>>) -> HuakResult<VirtualEnvironment> {
         todo!()
     }
 
@@ -427,6 +405,11 @@ impl VirtualEnvironment {
     pub fn activate_with(&self, terminal: &Terminal) -> HuakResult<()> {
         todo!()
     }
+
+    /// Get all of the packages installed to the environment.
+    pub fn installed_packages(&self) -> HuakResult<Vec<Package>> {
+        todo!()
+    }
 }
 
 /// A struct for managing resolving dependencies.
@@ -441,13 +424,13 @@ impl DependencyResolver {
         }
     }
 
-    pub fn with_dependencies(
-        &mut self,
-        dependencies: &[Package],
-    ) -> HuakResult<DependencyResolver> {
-        self.dependencies = dependencies.to_vec();
+    pub fn dependencies(&self) -> &Vec<Package> {
+        &self.dependencies
+    }
 
-        Ok(*self)
+    pub fn with_dependencies(&mut self, dependencies: &[Package]) -> &mut DependencyResolver {
+        self.dependencies = dependencies.to_vec();
+        self
     }
 
     pub fn resolve(&mut self) -> HuakResult<DependencyResolver> {
@@ -652,18 +635,6 @@ mod tests {
     use tempfile::tempdir;
 
     use super::*;
-
-    #[test]
-    fn workspace_from_path() {
-        let dir = tempdir().unwrap().into_path();
-        let mock_dir = test_resources_dir_path().join("mock-project");
-        fs::copy_dir(&mock_dir, &dir).unwrap();
-
-        let ws = Workspace::from_path(&dir.join("mock-project")).unwrap();
-        let project = ws.project();
-
-        assert!(project.project_layout.pyproject_toml_path.exists())
-    }
 
     #[test]
     fn project_bootstrap() {

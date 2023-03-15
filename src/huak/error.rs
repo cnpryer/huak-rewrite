@@ -10,8 +10,12 @@ pub type HuakResult<T> = Result<T, HuakError>;
 
 #[derive(Error, Debug)]
 pub enum HuakError {
+    #[error("a problem occurred with resolving build options")]
+    BuildOptionsMissingError,
     #[error("a problem with argument parsing occurred: {0}")]
     ClapError(#[from] clap::Error),
+    #[error("a problem with dependency resolution occurred: {0}")]
+    DependencyResolutionError(String),
     #[error("a directory already exists: {0}")]
     DirectoryExists(PathBuf),
     #[error("a problem with the environment occurred: {0}")]
