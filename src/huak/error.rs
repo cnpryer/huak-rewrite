@@ -22,6 +22,8 @@ pub enum HuakError {
     EnvVarError(#[from] std::env::VarError),
     #[error("a problem with the pseudo-terminal occurred: {0}")]
     FormatterError(String),
+    #[error("a problem occurred with resolving format options")]
+    FormatOptionsMissingError,
     #[error("a problem with git occurred: {0}")]
     GitError(#[from] git2::Error),
     #[error("a problem with http occurred: {0}")]
@@ -36,6 +38,10 @@ pub enum HuakError {
     IOError(#[from] io::Error),
     #[error("a problem with the linter occurred: {0}")]
     LinterError(String),
+    #[error("a problem occurred with resolving lint options")]
+    LintOptionsMissingError,
+    #[error("a problem occurred with resolving publish options")]
+    PublishOptionsMissingError,
     #[error("an installed python module could not be found: {0}")]
     PyModuleMissingError(String),
     #[error("a problem with building the project occurred")]

@@ -15,6 +15,7 @@ pub struct OperationConfig {
     build_options: Option<BuildOptions>,
     format_options: Option<FormatOptions>,
     lint_options: Option<LintOptions>,
+    publish_options: Option<PublishOptions>,
 }
 
 impl OperationConfig {
@@ -24,6 +25,7 @@ impl OperationConfig {
             build_options: None,
             format_options: None,
             lint_options: None,
+            publish_options: None,
         }
     }
 
@@ -62,6 +64,15 @@ impl OperationConfig {
         self.lint_options = Some(options);
         self
     }
+
+    pub fn publish_options(&self) -> Option<&PublishOptions> {
+        self.publish_options.as_ref()
+    }
+
+    pub fn with_publish_options(&mut self, options: PublishOptions) -> &mut OperationConfig {
+        self.publish_options = Some(options);
+        self
+    }
 }
 
 pub struct BuildOptions;
@@ -87,6 +98,16 @@ impl<'a> Iterator for &'a FormatOptions {
 pub struct LintOptions;
 
 impl<'a> Iterator for &'a LintOptions {
+    type Item = (String, String); // TODO
+
+    fn next(&mut self) -> Option<Self::Item> {
+        todo!()
+    }
+}
+
+pub struct PublishOptions;
+
+impl<'a> Iterator for &'a PublishOptions {
     type Item = (String, String); // TODO
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -180,7 +201,7 @@ pub fn format_project(config: &OperationConfig) -> HuakResult<()> {
         .arg(".");
     let format_options = match config.format_options() {
         Some(it) => it,
-        None => return Err(HuakError::BuildOptionsMissingError),
+        None => return Err(HuakError::FormatOptionsMissingError),
     };
     for vals in format_options {
         cmd = cmd.arg(format!("--{}={}", vals.0, vals.1));
@@ -230,7 +251,7 @@ pub fn lint_project(config: &OperationConfig) -> HuakResult<()> {
         .arg(".");
     let lint_options = match config.lint_options() {
         Some(it) => it,
-        None => return Err(HuakError::BuildOptionsMissingError),
+        None => return Err(HuakError::LintOptionsMissingError),
     };
     for vals in lint_options {
         cmd = cmd.arg(format!("--{}={}", vals.0, vals.1));
@@ -255,7 +276,7 @@ pub fn fix_project_lints(config: &OperationConfig) -> HuakResult<()> {
         .arg("--fix");
     let lint_options = match config.lint_options() {
         Some(it) => it,
-        None => return Err(HuakError::BuildOptionsMissingError),
+        None => return Err(HuakError::LintOptionsMissingError),
     };
     for vals in lint_options {
         cmd = cmd.arg(format!("--{}={}", vals.0, vals.1));
@@ -279,6 +300,31 @@ pub fn create_new_lib_project(config: &OperationConfig) -> HuakResult<()> {
 pub fn create_new_app_project(config: &OperationConfig) -> HuakResult<()> {
     let project = Project::new_lib();
     project.write_project(config.root())
+}
+
+/// Publish the Python project as to a registry.
+pub fn publish_project(config: &OperationConfig) -> HuakResult<()> {
+    let venv = VirtualEnvironment::find(Some(config.root()))?;
+    let mut terminal = Terminal::new();
+    let mut paths = sys::env_path_values();
+    paths.insert(0, venv.root().to_path_buf());
+    let mut cmd = Command::new("twine");
+    let mut cmd = cmd
+        .env(
+            "PATH",
+            std::env::join_paths(paths).map_err(|e| HuakError::InternalError(e.to_string()))?,
+        )
+        .current_dir(config.root())
+        .arg("upload")
+        .arg("dist/*");
+    let publish_options = match config.publish_options() {
+        Some(it) => it,
+        None => return Err(HuakError::PublishOptionsMissingError),
+    };
+    for vals in publish_options {
+        cmd = cmd.arg(format!("--{}={}", vals.0, vals.1));
+    }
+    terminal.run_command(cmd)
 }
 
 /// Remove a dependency from a Python project.
@@ -401,7 +447,6 @@ mod tests {
         crate::fs::copy_dir(&test_resources_dir_path().join("mock-project"), &dir).unwrap();
         let mut config = OperationConfig::new();
         let config = config.with_root(dir.join("mock-project"));
-        let venv = VirtualEnvironment::from_path(".venv").unwrap();
 
         build_project(&config).unwrap();
     }
