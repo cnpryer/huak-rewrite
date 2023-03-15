@@ -26,14 +26,14 @@ pub enum HuakError {
     FormatOptionsMissingError,
     #[error("a problem with git occurred: {0}")]
     GitError(#[from] git2::Error),
-    #[error("a problem with http occurred: {0}")]
-    HTTPError(#[from] reqwest::Error),
     #[error("a problem with huak configuration occurred: {0}")]
     HuakConfigurationError(String),
     #[error("a problem with huak's internals occurred: {0}")]
     InternalError(String),
     #[error("a version number could not be parsed: {0}")]
     InvalidVersionString(String),
+    #[error("a problem occurred with json deserialization: {0}")]
+    JSONSerdeError(#[from] serde_json::Error),
     #[error("a problem with io occurred: {0}")]
     IOError(#[from] io::Error),
     #[error("a problem with the linter occurred: {0}")]
@@ -70,6 +70,8 @@ pub enum HuakError {
     PyVenvInvalidConfigFile(String),
     #[error("a venv could not be found")]
     PyVenvNotFoundError,
+    #[error("a http request failed: {0}")]
+    ReqwestError(#[from] reqwest::Error),
     #[error("a problem with the test utility occurred: {0}")]
     TestingError(String),
     #[error("a problem with toml deserialization occurred: {0}")]

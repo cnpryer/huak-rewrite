@@ -1,7 +1,7 @@
-use error::HuakResult;
+use error::{HuakError, HuakResult};
 use pep440_rs::{Operator as VersionOperator, Version};
 use pyproject_toml::PyProjectToml as ProjectToml;
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 use std::{
     collections::{hash_map::RandomState, HashMap},
     fmt::Display,
@@ -607,6 +607,64 @@ pub struct DistInfo {
     requested_file: Option<File>,
     /// File containing metadata about the archive.
     wheel_file: Option<File>,
+}
+
+/// A client used to interact with a package index.
+pub struct PackageIndexClient;
+
+impl PackageIndexClient {
+    pub fn new() -> PackageIndexClient {
+        PackageIndexClient
+    }
+
+    pub fn query(&self, package: &Package) -> HuakResult<PackageIndexData> {
+        let url = format!("https://pypi.org/pypi/{}/json", package.name());
+        reqwest::blocking::get(url)?
+            .json()
+            .map_err(|e| HuakError::ReqwestError(e))
+    }
+}
+
+/// Data about a package from a package index.
+// TODO: Support more than https://pypi.org/pypi/<package name>/json
+//       Ex: See https://peps.python.org/pep-0503/
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PackageIndexData {
+    pub info: PackageInfo,
+    last_serial: u64,
+    releases: serde_json::value::Value,
+    urls: Vec<serde_json::value::Value>,
+    vulnerabilities: Vec<serde_json::value::Value>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PackageInfo {
+    pub author: String,
+    pub author_email: String,
+    pub bugtrack_url: serde_json::value::Value,
+    pub classifiers: Vec<String>,
+    pub description: String,
+    pub description_content_type: String,
+    pub docs_url: serde_json::value::Value,
+    pub download_url: serde_json::value::Value,
+    pub downloads: serde_json::value::Value,
+    pub home_page: serde_json::value::Value,
+    pub keywords: serde_json::value::Value,
+    pub license: serde_json::value::Value,
+    pub maintainer: serde_json::value::Value,
+    pub maintainer_email: serde_json::value::Value,
+    pub name: String,
+    pub package_url: String,
+    pub platform: serde_json::value::Value,
+    pub project_url: String,
+    pub project_urls: serde_json::value::Value,
+    pub release_url: String,
+    pub requires_dist: serde_json::value::Value,
+    pub requires_python: String,
+    pub summary: String,
+    pub version: String,
+    pub yanked: bool,
+    pub yanked_reason: serde_json::value::Value,
 }
 
 /// Get a hashmap of Python interpreters. Each entry is stored with the interpreter's
