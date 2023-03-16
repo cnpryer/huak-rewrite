@@ -48,55 +48,55 @@ pub struct Project {
     /// The project's pyproject.toml file containing metadata about the project.
     /// See https://peps.python.org/pep-0621/
     pyproject_toml: PyProjectToml,
-    /// The project's main dependencies.
-    dependencies: Vec<Package>,
-    /// The project's optional dependencies.
-    optional_dependencies: HashMap<String, Vec<Package>>,
 }
 
 impl Project {
     /// Create a new project.
     pub fn new() -> Project {
-        todo!()
+        Project::default()
     }
 
     /// Create a project from its manifest file path.
     pub fn from_manifest(path: impl AsRef<Path>) -> HuakResult<Project> {
-        todo!()
-    }
-
-    /// Create a new library-like project.
-    pub fn new_lib() -> Project {
-        let project_type = ProjectType::Library;
-
-        todo!();
-    }
-
-    /// Create a new application-like project.
-    pub fn new_app() -> Project {
-        let project_type = ProjectType::Application;
-
-        todo!()
+        let path = path.as_ref();
+        let mut project = Project::new();
+        project.pyproject_toml = PyProjectToml::from_path(path)?;
+        project.project_layout = ProjectLayout {
+            root: path
+                .parent()
+                .ok_or(HuakError::ProjectRootMissingError)?
+                .to_path_buf(),
+            pyproject_toml_path: path.to_path_buf(),
+        };
+        Ok(project)
     }
 
     /// Get the absolute path to the root directory of the project.
     pub fn root(&self) -> &PathBuf {
-        todo!()
+        &self.project_layout.root
     }
 
     /// Get the Python project's pyproject.toml file.
     pub fn pyproject_toml(&self) -> &PyProjectToml {
-        todo!()
+        &self.pyproject_toml
     }
 
     /// Get the Python project's main dependencies.
-    pub fn dependencies(&self) -> &Vec<Package> {
-        todo!()
+    pub fn dependencies(&self) -> HuakResult<Vec<Package>> {
+        self.pyproject_toml
+            .dependencies()
+            .iter()
+            .map(|dep| Package::from_str(*dep))
+            .collect()
     }
 
     /// Get a group of optional dependencies from the Python project.
-    pub fn optional_dependencey_group(&self, group: &str) -> &Vec<Package> {
-        todo!()
+    pub fn optional_dependencey_group(&self, group: &str) -> HuakResult<Vec<Package>> {
+        self.pyproject_toml
+            .dependencies()
+            .iter()
+            .map(|dep| Package::from_str(*dep))
+            .collect()
     }
 
     /// Add a Python package as a dependency to the project.
@@ -125,6 +125,14 @@ impl Project {
     }
 }
 
+impl From<ProjectType> for Project {
+    fn from(value: ProjectType) -> Self {
+        let mut project = Project::new();
+        project.project_type = value;
+        project
+    }
+}
+
 /// A project type might indicate if a project is an application-like project or a
 /// library-like project.
 #[derive(Default, Eq, PartialEq, Debug)]
@@ -144,8 +152,6 @@ pub enum ProjectType {
 pub struct ProjectLayout {
     /// The absolute path to the root directory of the project.
     root: PathBuf,
-    /// The absolute path to the Python root directory.
-    python_root: PathBuf,
     /// The absolute path to the pyproject.toml file.
     pyproject_toml_path: PathBuf,
 }
@@ -546,7 +552,7 @@ impl Package {
 }
 
 impl FromStr for Package {
-    type Err = pep440_rs::Pep440Error;
+    type Err = HuakError;
 
     /// Create a Python package from str.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -718,13 +724,7 @@ mod tests {
 
     #[test]
     fn project_bootstrap() {
-        let default_project = Project::new();
-        let lib = Project::new_lib();
-        let app = Project::new_app();
-
-        assert_eq!(default_project.project_type, ProjectType::default());
-        assert_eq!(lib.project_type, ProjectType::Library);
-        assert_eq!(app.project_type, ProjectType::Application);
+        todo!()
     }
 
     #[test]
