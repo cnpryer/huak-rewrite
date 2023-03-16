@@ -1,4 +1,4 @@
-use std::{io, path::PathBuf};
+use std::{error, io, path::PathBuf};
 
 use thiserror::Error;
 
@@ -40,36 +40,38 @@ pub enum HuakError {
     LinterError(String),
     #[error("a problem occurred with resolving lint options")]
     LintOptionsMissingError,
+    #[error("a problem with building the project occurred")]
+    PackageBuildError,
+    #[error("a problem occurred initializing a package from a string")]
+    PackageFromStringError,
+    #[error("a problem with the package index occurred: {0}")]
+    PackageIndexError(String),
+    #[error("a problem with package installation occurred: {0}")]
+    PackageInstallationError(String),
+    #[error("a problem with the package version operator occurred: {0}")]
+    PackageInvalidVersionOperator(String),
+    #[error("a problem with the package version occurred: {0}")]
+    PackageInvalidVersion(String),
+    #[error("a problem with the package version specifier occurred")]
+    PackageVersionSpecifierError,
+    #[error("a project file could not be found")]
+    ProjectFileNotFound,
+    #[error("a pyproject.toml already exists")]
+    ProjectTomlExistsError,
+    #[error("a problem with locating the project's version number occurred")]
+    ProjectVersionNotFound,
+    #[error("a problem occurred attempting to locate the project's root")]
+    ProjectRootMissingError,
     #[error("a problem occurred with resolving publish options")]
     PublishOptionsMissingError,
     #[error("an installed python module could not be found: {0}")]
-    PyModuleMissingError(String),
-    #[error("a problem with building the project occurred")]
-    PyPackageBuildError,
-    #[error("a problem with the package index occurred: {0}")]
-    PyPackageIndexError(String),
-    #[error("a problem with package initialization occurred: {0}")]
-    PyPackageInitalizationError(String),
-    #[error("a problem with package installation occurred: {0}")]
-    PyPackageInstallationError(String),
-    #[error("a problem with the package version operator occurred: {0}")]
-    PyPackageInvalidVersionOperator(String),
-    #[error("a problem with the package version occurred: {0}")]
-    PyPackageInvalidVersion(String),
-    #[error("a problem with the package version specifier occurred")]
-    PyPackageVersionSpecifierError,
-    #[error("a project file could not be found")]
-    PyProjectFileNotFound,
-    #[error("a pyproject.toml already exists")]
-    PyProjectTomlExistsError,
-    #[error("a problem with locating the project's version number occurred")]
-    PyProjectVersionNotFound,
+    PythonModuleMissingError(String),
     #[error("a python interpreter could not be found")]
     PythonNotFoundError,
     #[error("a problem occurred parsing the virtual environment's config file: {0}")]
-    PyVenvInvalidConfigFile(String),
+    VenvInvalidConfigFile(String),
     #[error("a venv could not be found")]
-    PyVenvNotFoundError,
+    VenvNotFoundError,
     #[error("a http request failed: {0}")]
     ReqwestError(#[from] reqwest::Error),
     #[error("a problem with the test utility occurred: {0}")]
