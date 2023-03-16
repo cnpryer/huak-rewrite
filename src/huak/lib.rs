@@ -941,7 +941,7 @@ build-backend = "hatchling.build"
             .exists());
         #[cfg(windows)]
         assert!(python_environment
-            .python_executables_dir_path()
+            .executables_dir_path()
             .join("python.exe")
             .exists());
     }
