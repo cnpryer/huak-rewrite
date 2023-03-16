@@ -3,7 +3,7 @@
 use crate::{
     error::{HuakError, HuakResult},
     sys::{self, Terminal},
-    Package, Project, PyProjectToml, VirtualEnvironment,
+    Package, Project, ProjectType, PyProjectToml, VirtualEnvironment,
 };
 use std::{
     path::{Path, PathBuf},
@@ -220,8 +220,8 @@ pub fn init_project(config: &OperationConfig) -> HuakResult<()> {
 pub fn install_project_dependencies(config: &OperationConfig) -> HuakResult<()> {
     let mut venv = VirtualEnvironment::find(Some(config.root()))?;
     let project = Project::from_manifest(config.root().join("pyproject.toml"))?;
-    let packages = project.dependencies();
-    venv.install_packages(packages)
+    let packages = project.dependencies()?;
+    venv.install_packages(&packages)
 }
 
 /// Install groups of a Python project's optional dependencies to an environment.
@@ -231,8 +231,8 @@ pub fn install_project_optional_dependencies(
 ) -> HuakResult<()> {
     let mut venv = VirtualEnvironment::find(Some(config.root()))?;
     let project = Project::from_manifest(config.root().join("pyproject.toml"))?;
-    let packages = project.optional_dependencey_group(group);
-    venv.install_packages(packages)
+    let packages = project.optional_dependencey_group(group)?;
+    venv.install_packages(&packages)
 }
 
 /// Lint a Python project's source code.
@@ -292,13 +292,13 @@ pub fn create_new_default_project(config: &OperationConfig) -> HuakResult<()> {
 
 /// Create a new library-like Python project on the system.
 pub fn create_new_lib_project(config: &OperationConfig) -> HuakResult<()> {
-    let project = Project::new_lib();
+    let project = Project::from(ProjectType::Application);
     project.write_project(config.root())
 }
 
 /// Create a new application-like Python project on the system.
 pub fn create_new_app_project(config: &OperationConfig) -> HuakResult<()> {
-    let project = Project::new_lib();
+    let project = Project::from(ProjectType::Library);
     project.write_project(config.root())
 }
 
@@ -401,7 +401,7 @@ mod tests {
         assert!(venv.find_site_packages_package("ruff").is_some());
         assert!(deps
             .iter()
-            .all(|item| project.dependencies().contains(item)));
+            .all(|item| project.dependencies().unwrap().contains(item)));
         assert!(deps
             .iter()
             .map(|item| item)
@@ -429,9 +429,10 @@ mod tests {
             PyProjectToml::from_path(dir.join("mock-project").join("pyproject.toml")).unwrap();
 
         assert!(venv.find_site_packages_package("ruff").is_some());
-        assert!(deps
-            .iter()
-            .all(|item| project.optional_dependencey_group("test").contains(item)));
+        assert!(deps.iter().all(|item| project
+            .optional_dependencey_group("test")
+            .unwrap()
+            .contains(item)));
         assert!(deps.iter().map(|item| item).all(|item| ser_toml
             .optional_dependencey_group("test")
             .contains(&item.dependency_str())));
