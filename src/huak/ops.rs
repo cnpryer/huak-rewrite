@@ -2,30 +2,30 @@
 ///! existing on a system.
 use crate::{
     error::{HuakError, HuakResult},
-    sys::{self, Terminal},
-    Package, Project, ProjectType, PyProjectToml, VirtualEnvironment,
+    sys::{self, Terminal, Verbosity},
+    Package, Project, ProjectType, PyProjectToml,
 };
 use std::{
     path::{Path, PathBuf},
     process::Command,
 };
 
+#[derive(Default)]
 pub struct OperationConfig {
     root: PathBuf,
     build_options: Option<BuildOptions>,
     format_options: Option<FormatOptions>,
     lint_options: Option<LintOptions>,
     publish_options: Option<PublishOptions>,
+    installer_options: Option<InstallerOptions>,
+    terminal_options: Option<TerminalOptions>,
 }
 
 impl OperationConfig {
     pub fn new() -> OperationConfig {
         OperationConfig {
             root: PathBuf::new(),
-            build_options: None,
-            format_options: None,
-            lint_options: None,
-            publish_options: None,
+            ..Default::default()
         }
     }
 
@@ -73,53 +73,40 @@ impl OperationConfig {
         self.publish_options = Some(options);
         self
     }
+
+    pub fn installer_options(&self) -> Option<&InstallerOptions> {
+        self.installer_options.as_ref()
+    }
+
+    pub fn with_installer_options(&mut self, options: InstallerOptions) -> &mut OperationConfig {
+        self.installer_options = Some(options);
+        self
+    }
+
+    pub fn terminal_options(&self) -> Option<&TerminalOptions> {
+        self.terminal_options.as_ref()
+    }
+
+    pub fn with_terminal_options(&mut self, options: TerminalOptions) -> &mut OperationConfig {
+        self.terminal_options = Some(options);
+        self
+    }
 }
 
 pub struct BuildOptions;
-
-impl<'a> Iterator for &'a BuildOptions {
-    type Item = (String, String); // TODO
-
-    fn next(&mut self) -> Option<Self::Item> {
-        todo!()
-    }
-}
-
 pub struct FormatOptions;
-
-impl<'a> Iterator for &'a FormatOptions {
-    type Item = (String, String); // TODO
-
-    fn next(&mut self) -> Option<Self::Item> {
-        todo!()
-    }
-}
-
 pub struct LintOptions;
-
-impl<'a> Iterator for &'a LintOptions {
-    type Item = (String, String); // TODO
-
-    fn next(&mut self) -> Option<Self::Item> {
-        todo!()
-    }
-}
-
 pub struct PublishOptions;
-
-impl<'a> Iterator for &'a PublishOptions {
-    type Item = (String, String); // TODO
-
-    fn next(&mut self) -> Option<Self::Item> {
-        todo!()
-    }
+pub struct InstallerOptions;
+pub struct TerminalOptions {
+    pub verbosity: Verbosity,
 }
 
 /// Activate a Python virtual environment.
 pub fn activate_venv(config: &OperationConfig) -> HuakResult<()> {
-    let venv = VirtualEnvironment::find(Some(config.root()))?;
-    let terminal = Terminal::new();
-    venv.activate_with_terminal(&terminal)
+    let venv = crate::find_venv()?;
+    let mut terminal = Terminal::new();
+    venv.activate_with_terminal(&mut terminal)
 }
 
 /// Add Python packages as a dependencies to a Python project.
@@ -127,14 +114,15 @@ pub fn add_project_dependencies(
     config: &OperationConfig,
     dependencies: &[Package],
 ) -> HuakResult<()> {
-    let mut venv = VirtualEnvironment::find(Some(config.root()))?;
+    let mut venv = crate::find_venv()?;
     let mut packages = venv.installed_packages()?;
     packages.extend_from_slice(dependencies);
+    // TODO: Propagate installer configuration (potentially per-package)
     venv.install_packages(&packages)?;
     let manifest_path = config.root().join("pyproject.toml");
     let mut project = Project::from_manifest(&manifest_path)?;
     for package in &packages {
-        project.add_dependency(package);
+        project.add_dependency(&package.dependency_string());
     }
     project.pyproject_toml().write_file(&manifest_path)
 }
@@ -145,21 +133,22 @@ pub fn add_project_optional_dependencies(
     dependencies: &[Package],
     group: &str,
 ) -> HuakResult<()> {
-    let mut venv = VirtualEnvironment::find(Some(config.root()))?;
+    let mut venv = crate::find_venv()?;
     let mut packages = venv.installed_packages()?;
     packages.extend_from_slice(dependencies);
+    // TODO: Propagate installer configuration (potentially per-package)
     venv.install_packages(&packages)?;
     let manifest_path = config.root().join("pyproject.toml");
     let mut project = Project::from_manifest(&manifest_path)?;
     for package in &packages {
-        project.add_optional_dependency(package, group);
+        project.add_optional_dependency(&package.dependency_string(), group);
     }
     project.pyproject_toml().write_file(&manifest_path)
 }
 
 /// Build the Python project as installable package.
 pub fn build_project(config: &OperationConfig) -> HuakResult<()> {
-    let venv = VirtualEnvironment::find(Some(config.root()))?;
+    let venv = crate::find_venv()?;
     let mut terminal = Terminal::new();
     let mut paths = sys::env_path_values();
     paths.insert(0, venv.root().to_path_buf());
@@ -170,13 +159,7 @@ pub fn build_project(config: &OperationConfig) -> HuakResult<()> {
             std::env::join_paths(paths).map_err(|e| HuakError::InternalError(e.to_string()))?,
         )
         .current_dir(config.root());
-    let build_options = match config.build_options() {
-        Some(it) => it,
-        None => return Err(HuakError::BuildOptionsMissingError),
-    };
-    for vals in build_options {
-        cmd = cmd.arg(format!("--{}={}", vals.0, vals.1));
-    }
+    // TODO: Propagate CLI config
     terminal.run_command(cmd)
 }
 
@@ -187,7 +170,7 @@ pub fn clean_project(config: &OperationConfig) -> HuakResult<()> {
 
 /// Format the Python project's source code.
 pub fn format_project(config: &OperationConfig) -> HuakResult<()> {
-    let venv = VirtualEnvironment::find(Some(config.root()))?;
+    let venv = crate::find_venv()?;
     let mut terminal = Terminal::new();
     let mut paths = sys::env_path_values();
     paths.insert(0, venv.root().to_path_buf());
@@ -199,13 +182,7 @@ pub fn format_project(config: &OperationConfig) -> HuakResult<()> {
         )
         .current_dir(config.root())
         .arg(".");
-    let format_options = match config.format_options() {
-        Some(it) => it,
-        None => return Err(HuakError::FormatOptionsMissingError),
-    };
-    for vals in format_options {
-        cmd = cmd.arg(format!("--{}={}", vals.0, vals.1));
-    }
+    // TODO: Propagate CLI config
     terminal.run_command(cmd)
 }
 
@@ -218,9 +195,10 @@ pub fn init_project(config: &OperationConfig) -> HuakResult<()> {
 
 /// Install a Python project's dependencies to an environment.
 pub fn install_project_dependencies(config: &OperationConfig) -> HuakResult<()> {
-    let mut venv = VirtualEnvironment::find(Some(config.root()))?;
+    let mut venv = crate::find_venv()?;
     let project = Project::from_manifest(config.root().join("pyproject.toml"))?;
     let packages = project.dependencies()?;
+    // TODO: Propagate installer configuration (potentially per-package)
     venv.install_packages(&packages)
 }
 
@@ -229,15 +207,16 @@ pub fn install_project_optional_dependencies(
     config: &OperationConfig,
     group: &str,
 ) -> HuakResult<()> {
-    let mut venv = VirtualEnvironment::find(Some(config.root()))?;
+    let mut venv = crate::find_venv()?;
     let project = Project::from_manifest(config.root().join("pyproject.toml"))?;
     let packages = project.optional_dependencey_group(group)?;
+    // TODO: Propagate installer configuration (potentially per-package)
     venv.install_packages(&packages)
 }
 
 /// Lint a Python project's source code.
 pub fn lint_project(config: &OperationConfig) -> HuakResult<()> {
-    let venv = VirtualEnvironment::find(Some(config.root()))?;
+    let venv = crate::find_venv()?;
     let mut terminal = Terminal::new();
     let mut paths = sys::env_path_values();
     paths.insert(0, venv.root().to_path_buf());
@@ -249,38 +228,7 @@ pub fn lint_project(config: &OperationConfig) -> HuakResult<()> {
         )
         .current_dir(config.root())
         .arg(".");
-    let lint_options = match config.lint_options() {
-        Some(it) => it,
-        None => return Err(HuakError::LintOptionsMissingError),
-    };
-    for vals in lint_options {
-        cmd = cmd.arg(format!("--{}={}", vals.0, vals.1));
-    }
-    terminal.run_command(cmd)
-}
-
-/// Fix any fixable lint issues found in the Python project's source code.
-pub fn fix_project_lints(config: &OperationConfig) -> HuakResult<()> {
-    let venv = VirtualEnvironment::find(Some(config.root()))?;
-    let mut terminal = Terminal::new();
-    let mut paths = sys::env_path_values();
-    paths.insert(0, venv.root().to_path_buf());
-    let mut cmd = Command::new("ruff");
-    let mut cmd = cmd
-        .env(
-            "PATH",
-            std::env::join_paths(paths).map_err(|e| HuakError::InternalError(e.to_string()))?,
-        )
-        .current_dir(config.root())
-        .arg(".")
-        .arg("--fix");
-    let lint_options = match config.lint_options() {
-        Some(it) => it,
-        None => return Err(HuakError::LintOptionsMissingError),
-    };
-    for vals in lint_options {
-        cmd = cmd.arg(format!("--{}={}", vals.0, vals.1));
-    }
+    // TODO: Propagate CLI config (including --fix)
     terminal.run_command(cmd)
 }
 
@@ -304,7 +252,7 @@ pub fn create_new_app_project(config: &OperationConfig) -> HuakResult<()> {
 
 /// Publish the Python project as to a registry.
 pub fn publish_project(config: &OperationConfig) -> HuakResult<()> {
-    let venv = VirtualEnvironment::find(Some(config.root()))?;
+    let venv = crate::find_venv()?;
     let mut terminal = Terminal::new();
     let mut paths = sys::env_path_values();
     paths.insert(0, venv.root().to_path_buf());
@@ -317,13 +265,7 @@ pub fn publish_project(config: &OperationConfig) -> HuakResult<()> {
         .current_dir(config.root())
         .arg("upload")
         .arg("dist/*");
-    let publish_options = match config.publish_options() {
-        Some(it) => it,
-        None => return Err(HuakError::PublishOptionsMissingError),
-    };
-    for vals in publish_options {
-        cmd = cmd.arg(format!("--{}={}", vals.0, vals.1));
-    }
+    // TODO: Propagate CLI config
     terminal.run_command(cmd)
 }
 
@@ -332,7 +274,12 @@ pub fn remove_project_dependencies(
     config: &OperationConfig,
     dependency_names: &[&str],
 ) -> HuakResult<()> {
-    todo!()
+    let mut venv = crate::find_venv()?;
+    let mut project = Project::from_manifest(config.root().join("pyproject.toml"))?;
+    for dependency in dependency_names {
+        project.remove_dependency(dependency);
+    }
+    venv.uninstall_packages(dependency_names)
 }
 
 /// Remove a dependency from a Python project.
@@ -341,26 +288,58 @@ pub fn remove_project_optional_dependencies(
     dependency_names: &[&str],
     group: &str,
 ) -> HuakResult<()> {
-    todo!()
+    let mut venv = crate::find_venv()?;
+    let mut project = Project::from_manifest(config.root().join("pyproject.toml"))?;
+    for dependency in dependency_names {
+        project.remove_optional_dependency(dependency, group);
+    }
+    venv.uninstall_packages(dependency_names)
 }
 
 /// Run a command from within a Python project's context.
 pub fn run_command_str_with_context(config: &OperationConfig, command: &str) -> HuakResult<()> {
-    todo!()
-}
-
-/// Run a command from within a Python project's context.
-pub fn run_command_list_with_context(config: &OperationConfig, command: &[&str]) -> HuakResult<()> {
-    todo!()
+    let venv = crate::find_venv()?;
+    let mut terminal = Terminal::new();
+    let mut paths = sys::env_path_values();
+    paths.insert(0, venv.root().to_path_buf());
+    let mut cmd = Command::new("twine");
+    let cmd = cmd
+        .env(
+            "PATH",
+            std::env::join_paths(paths).map_err(|e| HuakError::InternalError(e.to_string()))?,
+        )
+        .current_dir(config.root())
+        .arg(command);
+    // TODO: Propagate CLI config
+    terminal.run_command(cmd)
 }
 
 /// Run a Python project's tests.
 pub fn test_project(config: &OperationConfig) -> HuakResult<()> {
-    todo!()
+    let venv = crate::find_venv()?;
+    let mut terminal = Terminal::new();
+    let mut paths = sys::env_path_values();
+    paths.insert(0, venv.root().to_path_buf());
+    let mut cmd = Command::new("pytest");
+    let cmd = cmd
+        .env(
+            "PATH",
+            std::env::join_paths(paths).map_err(|e| HuakError::InternalError(e.to_string()))?,
+        )
+        .current_dir(config.root());
+    // TODO: Propagate CLI config
+    terminal.run_command(cmd)
 }
 
 /// Display the version of the Python project.
 pub fn display_project_version(config: &OperationConfig) -> HuakResult<()> {
+    let project = Project::from_manifest(config.root().join("pyproject.toml"))?;
+    let mut terminal = Terminal::new();
+    let verbosity = match config.terminal_options() {
+        Some(it) => it.verbosity,
+        None => Verbosity::default(),
+    };
+    terminal.set_verbosity(verbosity);
     todo!()
 }
 
@@ -405,12 +384,12 @@ mod tests {
         assert!(deps.iter().map(|item| item).all(|item| ser_toml
             .dependencies()
             .unwrap()
-            .contains(&item.dependency_str().to_string())));
+            .contains(&item.dependency_string())));
         assert!(deps.iter().map(|item| item).all(|item| project
             .pyproject_toml()
             .dependencies()
             .unwrap()
-            .contains(&item.dependency_str().to_string())));
+            .contains(&item.dependency_string())));
     }
 
     #[test]
@@ -437,12 +416,12 @@ mod tests {
         assert!(deps.iter().map(|item| item).all(|item| ser_toml
             .optional_dependencey_group("test")
             .unwrap()
-            .contains(&item.dependency_str().to_string())));
+            .contains(&item.dependency_string())));
         assert!(deps.iter().map(|item| item).all(|item| project
             .pyproject_toml()
             .optional_dependencey_group("test")
             .unwrap()
-            .contains(&item.dependency_str().to_string())));
+            .contains(&item.dependency_string())));
     }
 
     #[test]
@@ -514,7 +493,7 @@ def fn( ):
         let mut config = OperationConfig::new();
         let config = config.with_root(dir.join("mock-project"));
         let mut venv = VirtualEnvironment::from_path(".venv").unwrap();
-        venv.uninstall_package("black").unwrap();
+        venv.uninstall_packages(&["black"]).unwrap();
         let had_black = venv.find_site_packages_package("black").is_some();
 
         install_project_dependencies(&config).unwrap();
@@ -530,7 +509,7 @@ def fn( ):
         let mut config = OperationConfig::new();
         let config = config.with_root(dir.join("mock-project"));
         let mut venv = VirtualEnvironment::from_path(".venv").unwrap();
-        venv.uninstall_package("pytest").unwrap();
+        venv.uninstall_packages(&["pytest"]).unwrap();
         let had_pytest = venv.find_site_packages_package("pytest").is_some();
 
         install_project_optional_dependencies(&config, "test").unwrap();
@@ -571,7 +550,8 @@ def fn():
 "#;
         std::fs::write(&lint_fix_filepath, pre_fix_str).unwrap();
 
-        fix_project_lints(&config).unwrap();
+        // TODO: Add --fix to LintOptions
+        lint_project(&config).unwrap();
 
         let post_fix_str = std::fs::read_to_string(&lint_fix_filepath).unwrap();
 
@@ -690,7 +670,7 @@ main()
             .pyproject_toml()
             .dependencies()
             .unwrap()
-            .contains(&black_package.dependency_str().to_string());
+            .contains(&black_package.dependency_string());
 
         remove_project_dependencies(&config, &[black_package.name()]).unwrap();
 
@@ -701,8 +681,8 @@ main()
             .pyproject_toml()
             .dependencies()
             .unwrap()
-            .contains(&black_package.dependency_str().to_string());
-        venv.install_package(&black_package).unwrap();
+            .contains(&black_package.dependency_string());
+        venv.install_packages(&[black_package]).unwrap();
 
         assert!(venv_had_black);
         assert!(toml_had_black);
@@ -725,7 +705,7 @@ main()
             .pyproject_toml()
             .dependencies()
             .unwrap()
-            .contains(&pytest_package.dependency_str().to_string());
+            .contains(&pytest_package.dependency_string());
 
         remove_project_optional_dependencies(&config, &[pytest_package.name()], "test").unwrap();
 
@@ -736,8 +716,8 @@ main()
             .pyproject_toml()
             .dependencies()
             .unwrap()
-            .contains(&pytest_package.dependency_str().to_string());
-        venv.install_package(&pytest_package).unwrap();
+            .contains(&pytest_package.dependency_string());
+        venv.install_packages(&[pytest_package]).unwrap();
 
         assert!(venv_had_pytest);
         assert!(toml_had_pytest);
@@ -758,7 +738,7 @@ main()
 
         let mut venv = VirtualEnvironment::from_path(PathBuf::from(".venv")).unwrap();
         let venv_has_xlcsv = venv.find_site_packages_package("xlcsv").is_some();
-        venv.uninstall_package("xlcsv").unwrap();
+        venv.uninstall_packages(&["xlcsv"]).unwrap();
 
         assert!(!venv_had_xlcsv);
         assert!(venv_has_xlcsv);

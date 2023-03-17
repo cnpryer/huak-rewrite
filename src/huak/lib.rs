@@ -4,7 +4,6 @@ use pyproject_toml::PyProjectToml as ProjectToml;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{hash_map::RandomState, HashMap},
-    fmt::Display,
     fs::File,
     path::{Path, PathBuf},
     str::FromStr,
@@ -55,7 +54,14 @@ pub struct Project {
 impl Project {
     /// Create a new project.
     pub fn new() -> Project {
-        Project::default()
+        Project {
+            project_type: ProjectType::Library,
+            project_layout: ProjectLayout {
+                root: PathBuf::new(),
+                pyproject_toml_path: PathBuf::new(),
+            },
+            pyproject_toml: PyProjectToml::new(),
+        }
     }
 
     /// Create a project from its manifest file path.
@@ -83,7 +89,7 @@ impl Project {
         &self.pyproject_toml
     }
 
-    /// Get the Python project's main dependencies.
+    /// Get the Python project's main dependencies listed in the project file.
     pub fn dependencies(&self) -> HuakResult<Vec<Package>> {
         if let Some(dependencies) = self.pyproject_toml.dependencies() {
             return dependencies
@@ -94,7 +100,7 @@ impl Project {
         Ok(Vec::new())
     }
 
-    /// Get a group of optional dependencies from the Python project.
+    /// Get a group of optional dependencies from the Python project's project file.
     pub fn optional_dependencey_group(&self, group_name: &str) -> HuakResult<Vec<Package>> {
         if let Some(dependencies) = self.pyproject_toml.optional_dependencey_group(group_name) {
             return dependencies
@@ -105,22 +111,23 @@ impl Project {
         Ok(Vec::new())
     }
 
-    /// Add a Python package as a dependency to the project.
-    pub fn add_dependency(&mut self, package: &Package) {
-        todo!()
+    /// Add a Python package as a dependency to the project's project file.
+    pub fn add_dependency(&mut self, package_str: &str) {
+        self.pyproject_toml.add_dependency(package_str);
     }
 
-    /// Add a Python package as a dependency to the project.
-    pub fn add_optional_dependency(&mut self, package: &Package, group: &str) {
-        todo!()
+    /// Add a Python package as a dependency to the project' project file.
+    pub fn add_optional_dependency(&mut self, package_str: &str, group_name: &str) {
+        self.pyproject_toml
+            .add_optional_dependency(package_str, group_name)
     }
 
-    /// Remove a dependency from the project.
+    /// Remove a dependency from the project's project file.
     pub fn remove_dependency(&mut self, package_str: &str) {
         self.pyproject_toml.remove_dependency(package_str);
     }
 
-    /// Remove an optional dependency from the project.
+    /// Remove an optional dependency from the project's project file.
     pub fn remove_optional_dependency(&mut self, package_str: &str, group_name: &str) {
         self.pyproject_toml
             .remove_optional_dependency(package_str, group_name);
@@ -171,15 +178,6 @@ pub struct PyProjectToml {
     inner: ProjectToml,
 }
 
-impl Default for PyProjectToml {
-    fn default() -> Self {
-        Self {
-            inner: ProjectToml::new(DEFAULT_PYPROJECT_TOML_CONTENTS)
-                .expect("could not initilize default pyproject.toml"),
-        }
-    }
-}
-
 impl std::ops::Deref for PyProjectToml {
     type Target = ProjectToml;
 
@@ -197,7 +195,7 @@ impl std::ops::DerefMut for PyProjectToml {
 impl PyProjectToml {
     /// Create new pyproject.toml data.
     pub fn new() -> PyProjectToml {
-        todo!()
+        PyProjectToml::default()
     }
 
     /// Create new pyproject.toml data from a pyproject.toml's path.
@@ -320,6 +318,15 @@ impl PyProjectToml {
     }
 }
 
+impl Default for PyProjectToml {
+    fn default() -> Self {
+        Self {
+            inner: ProjectToml::new(default_pyproject_toml_contents())
+                .expect("could not initilize default pyproject.toml"),
+        }
+    }
+}
+
 pub fn default_pyproject_toml_contents() -> &'static str {
     DEFAULT_PYPROJECT_TOML_CONTENTS
 }
@@ -339,27 +346,30 @@ pub fn default_pyproject_toml_contents() -> &'static str {
 pub struct VirtualEnvironment {
     /// Absolute path to the root of the virtual environment directory.
     root: PathBuf,
+    /// The installer the virtual environment uses to install python packages.
+    installer: Installer,
 }
 
 impl VirtualEnvironment {
     /// Create a new virtual environment.
     pub fn new() -> VirtualEnvironment {
-        todo!()
+        VirtualEnvironment {
+            root: PathBuf::new(),
+            installer: Installer::new(),
+        }
     }
 
     /// Get a reference to the absolute path to the virtual environment.
-    pub fn root(&self) -> &PathBuf {
-        &self.root
+    pub fn root(&self) -> &Path {
+        self.root.as_ref()
     }
 
     /// Create a virtual environment from its root path.
     pub fn from_path(path: impl AsRef<Path>) -> HuakResult<VirtualEnvironment> {
-        todo!()
-    }
-
-    /// Find the virtual environment from some path.
-    pub fn find(from: Option<impl AsRef<Path>>) -> HuakResult<VirtualEnvironment> {
-        todo!()
+        Ok(VirtualEnvironment {
+            root: path.as_ref().to_path_buf(),
+            ..Default::default()
+        })
     }
 
     /// Get the python environment config.
@@ -368,18 +378,22 @@ impl VirtualEnvironment {
     }
 
     /// Create a Python virtual environment on the system.
-    pub fn create(&self) -> HuakResult<()> {
+    pub fn write_venv(&self) -> HuakResult<()> {
         todo!()
     }
 
     /// The absolute path to the Python environment's python interpreter binary.
     pub fn python_path(&self) -> PathBuf {
-        todo!()
+        #[cfg(windows)]
+        let file_name = "python.exe";
+        #[cfg(unix)]
+        let file_name = "python";
+        self.executables_dir_path().join(file_name)
     }
 
     /// The version of the Python environment's Python interpreter.
-    pub fn python_version(&self) -> &Version {
-        todo!()
+    pub fn python_version(&self) -> Option<Version> {
+        self.python_environment_config().version
     }
 
     /// The absolute path to the Python interpreter used to create the Python
@@ -395,36 +409,30 @@ impl VirtualEnvironment {
 
     /// The absolute path to the Python environment's executables directory.
     pub fn executables_dir_path(&self) -> PathBuf {
-        todo!()
+        #[cfg(windows)]
+        let dir_name = "Scripts";
+        #[cfg(unix)]
+        let dir_name = "bin";
+        self.root.join(dir_name)
     }
 
     /// The absolute path to the system's executables directory.
-    pub fn base_executables_dir_path(&self) -> PathBuf {
+    pub fn base_executables_dir_path(&self) -> &PathBuf {
         todo!()
     }
 
     /// The absolute path to the Python environment's site-packages directory.
-    pub fn site_packages_dir_path(&self) -> PathBuf {
+    pub fn site_packages_dir_path(&self) -> &PathBuf {
         todo!()
     }
 
     /// The absolute path to the system's site-packages directory.
-    pub fn base_site_packages_dir_path(&self) -> PathBuf {
-        todo!()
-    }
-
-    /// Install a Python package to the environment.
-    pub fn install_package(&mut self, package: &Package) -> HuakResult<()> {
+    pub fn base_site_packages_dir_path(&self) -> &PathBuf {
         todo!()
     }
 
     /// Install many Python packages to the environment.
     pub fn install_packages(&mut self, packages: &[Package]) -> HuakResult<()> {
-        todo!()
-    }
-
-    /// Uninstall a Python package from the environment.
-    pub fn uninstall_package(&mut self, package_name: &str) -> HuakResult<()> {
         todo!()
     }
 
@@ -456,22 +464,22 @@ impl VirtualEnvironment {
     }
 
     /// Add a package to the site-packages directory.
-    pub fn add_package_to_site_packages(&mut self, package: &Package) -> HuakResult<()> {
+    fn add_package_to_site_packages(&mut self, package: &Package) -> HuakResult<()> {
         todo!()
     }
 
     /// Add a package to the system's site-packages directory.
-    pub fn add_package_to_base_site_packages(&mut self, package: &Package) -> HuakResult<()> {
+    fn add_package_to_base_site_packages(&mut self, package: &Package) -> HuakResult<()> {
         todo!()
     }
 
     /// Remove a package from the site-packages directory.
-    pub fn remove_package_from_site_packages(&mut self, package: &Package) -> HuakResult<()> {
+    fn remove_package_from_site_packages(&mut self, package: &Package) -> HuakResult<()> {
         todo!()
     }
 
     /// Remove a package from the system's site-packages directory.
-    pub fn remove_package_from_base_site_packages(&mut self, package: &Package) -> HuakResult<()> {
+    fn remove_package_from_base_site_packages(&mut self, package: &Package) -> HuakResult<()> {
         todo!()
     }
 
@@ -481,13 +489,8 @@ impl VirtualEnvironment {
         todo!()
     }
 
-    /// Activate the Python environment with the system shell.
-    pub fn activate(&self) -> HuakResult<()> {
-        todo!()
-    }
-
     /// Activate the Python environment with a given terminal.
-    pub fn activate_with_terminal(&self, terminal: &Terminal) -> HuakResult<()> {
+    pub fn activate_with_terminal(&self, terminal: &mut Terminal) -> HuakResult<()> {
         todo!()
     }
 
@@ -497,41 +500,53 @@ impl VirtualEnvironment {
     }
 
     /// Get the environment's installer.
-    pub fn installer() -> Installer {
-        Installer {
-            packages: Vec::new(),
-        }
+    pub fn installer(&self) -> &Installer {
+        &self.installer
+    }
+
+    /// Set the installer of the virtual environment.
+    pub fn with_installer_config(&mut self, config: &InstallerConfig) -> &mut VirtualEnvironment {
+        self.installer.set_config(*config);
+        self
     }
 }
 
+/// Search for a Python virtual environment.
+/// 1. Check PATHS. If VIRTUAL_ENV exists then a venv is active; use it.
+/// 2. Walk from CWD up searching for dir containing pyvenv.cfg.
+pub fn find_venv() -> HuakResult<VirtualEnvironment> {
+    todo!()
+}
+
 /// A struct for managing installing packages.
+#[derive(Default)]
 pub struct Installer {
-    /// Staged packages to install.
-    packages: Vec<Package>,
+    /// Configuration for package installation
+    config: InstallerConfig,
 }
 
 impl Installer {
     pub fn new() -> Installer {
         Installer {
-            packages: Vec::new(),
+            config: InstallerConfig::new(),
         }
     }
 
-    pub fn packages(&self) -> &Vec<Package> {
-        &self.packages
+    pub fn config(&self) -> &InstallerConfig {
+        &self.config
     }
 
-    pub fn with_packages(&mut self, packages: &[Package]) -> &mut Installer {
-        self.packages = packages.to_vec();
-        self
+    pub fn set_config(&mut self, config: InstallerConfig) {
+        self.config = config;
     }
+}
 
-    pub fn install_all(&self) -> HuakResult<()> {
-        todo!()
-    }
+#[derive(Default, Copy, Clone)]
+pub struct InstallerConfig;
 
-    pub fn install(&mut self) -> HuakResult<()> {
-        todo!()
+impl InstallerConfig {
+    pub fn new() -> InstallerConfig {
+        InstallerConfig
     }
 }
 
@@ -584,39 +599,24 @@ pub struct Package {
 }
 
 impl Package {
-    /// Create a new Python package.
-    pub fn new() -> Package {
-        todo!()
-    }
-
-    /// Create a new Python package from str parts.
-    pub fn from_str_parts(name: &str, operator: &str, version: &str) -> Package {
-        todo!()
-    }
-
     /// Get the name of the package.
-    pub fn name(&self) -> &String {
-        todo!()
+    pub fn name(&self) -> &str {
+        self.name.as_ref()
     }
 
     /// Get the pacakge's PEP440 version operator.
     pub fn version_operator(&self) -> &VersionOperator {
-        todo!()
+        &self.version_operator
     }
 
     /// Get the package's PEP440 version.
     pub fn version(&self) -> &Version {
-        todo!()
-    }
-
-    /// Get the package version str.
-    pub fn version_str(&self) -> &str {
-        todo!()
+        &self.version
     }
 
     /// Get the pacakge name with its version specifier as a &str.
-    pub fn dependency_str(&self) -> &str {
-        todo!()
+    pub fn dependency_string(&self) -> String {
+        format!("{}{}", self.name(), self.version_operator())
     }
 }
 
@@ -625,13 +625,6 @@ impl FromStr for Package {
 
     /// Create a Python package from str.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        todo!()
-    }
-}
-
-impl Display for Package {
-    /// Format the package string for display.
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         todo!()
     }
 }
@@ -1035,14 +1028,14 @@ build-backend = "hatchling.build"
 
     #[test]
     fn package_display_str() {
-        let package = Package::from_str_parts("package", "==", "0.0.0");
+        let package = Package::from_str("package==0.0.0").unwrap();
 
-        assert_eq!(package.dependency_str(), "package==0.0.0");
+        assert_eq!(package.dependency_string(), "package==0.0.0");
     }
 
     #[test]
     fn package_version_operator() {
-        let package = Package::from_str_parts("package", "==", "0.0.0");
+        let package = Package::from_str("package==0.0.0").unwrap();
 
         assert_eq!(package.version_operator, pep440_rs::Operator::Equal);
     }
@@ -1051,13 +1044,13 @@ build-backend = "hatchling.build"
     fn package_from_str() {
         let package = Package::from_str("package==0.0.0").unwrap();
 
-        assert_eq!(package.dependency_str(), "package==0.0.0");
+        assert_eq!(package.dependency_string(), "package==0.0.0");
         assert_eq!(package.name(), "package");
         assert_eq!(
             package.version_operator().to_string(),
             pep440_rs::Operator::Equal.to_string()
         );
-        assert_eq!(package.version_str(), "0.0.0");
+        assert_eq!(package.version().to_string(), "0.0.0");
     }
 
     #[ignore = "currently untestable"]
@@ -1073,15 +1066,11 @@ build-backend = "hatchling.build"
 
     #[test]
     fn package_core_metadata() {
-        let package_metdata = Package::new();
-
         todo!()
     }
 
     #[test]
     fn package_dist_info() {
-        let package_dist_info = Package::new();
-
         todo!();
     }
 
