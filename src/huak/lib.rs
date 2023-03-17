@@ -23,6 +23,8 @@ name = ""
 version = "0.0.1"
 description = ""
 
+[project.dependencies]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -83,20 +85,24 @@ impl Project {
 
     /// Get the Python project's main dependencies.
     pub fn dependencies(&self) -> HuakResult<Vec<Package>> {
-        self.pyproject_toml
-            .dependencies()
-            .iter()
-            .map(|dep| Package::from_str(*dep))
-            .collect()
+        if let Some(dependencies) = self.pyproject_toml.dependencies() {
+            return dependencies
+                .iter()
+                .map(|dep| Package::from_str(dep))
+                .collect();
+        }
+        Ok(Vec::new())
     }
 
     /// Get a group of optional dependencies from the Python project.
-    pub fn optional_dependencey_group(&self, group: &str) -> HuakResult<Vec<Package>> {
-        self.pyproject_toml
-            .dependencies()
-            .iter()
-            .map(|dep| Package::from_str(*dep))
-            .collect()
+    pub fn optional_dependencey_group(&self, group_name: &str) -> HuakResult<Vec<Package>> {
+        if let Some(dependencies) = self.pyproject_toml.optional_dependencey_group(group_name) {
+            return dependencies
+                .iter()
+                .map(|dep| Package::from_str(dep))
+                .collect();
+        }
+        Ok(Vec::new())
     }
 
     /// Add a Python package as a dependency to the project.
@@ -110,13 +116,14 @@ impl Project {
     }
 
     /// Remove a dependency from the project.
-    pub fn remove_dependency(&mut self, package_name: &str) {
-        todo!()
+    pub fn remove_dependency(&mut self, package_str: &str) {
+        self.pyproject_toml.remove_dependency(package_str);
     }
 
     /// Remove an optional dependency from the project.
-    pub fn remove_optional_dependency(&self, package_name: &str, group: &str) {
-        todo!()
+    pub fn remove_optional_dependency(&mut self, package_str: &str, group_name: &str) {
+        self.pyproject_toml
+            .remove_optional_dependency(package_str, group_name);
     }
 
     /// Write the current project to some directory path.
@@ -173,6 +180,20 @@ impl Default for PyProjectToml {
     }
 }
 
+impl std::ops::Deref for PyProjectToml {
+    type Target = ProjectToml;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
+
+impl std::ops::DerefMut for PyProjectToml {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.inner
+    }
+}
+
 impl PyProjectToml {
     /// Create new pyproject.toml data.
     pub fn new() -> PyProjectToml {
@@ -181,57 +202,105 @@ impl PyProjectToml {
 
     /// Create new pyproject.toml data from a pyproject.toml's path.
     pub fn from_path(path: impl AsRef<Path>) -> HuakResult<PyProjectToml> {
-        todo!()
+        let contents = std::fs::read_to_string(path)?;
+        let pyproject_toml: PyProjectToml = toml::from_str(&contents)?;
+        Ok(pyproject_toml)
     }
 
     /// Get the project name.
-    pub fn project_name(&self) -> &String {
-        todo!()
+    pub fn project_name(&self) -> Option<&str> {
+        self.project.as_ref().map(|project| project.name.as_str())
     }
 
     /// Set the project name listed in the toml.
     pub fn set_project_name(&mut self, name: &str) {
-        todo!()
+        if let Some(project) = self.project.as_mut() {
+            project.name = name.to_string();
+        }
     }
 
     /// Get the project version.
-    pub fn project_version(&self) -> &String {
-        todo!()
+    pub fn project_version(&self) -> Option<&str> {
+        if let Some(project) = self.project.as_ref() {
+            return project.version.as_ref().map(|version| version.as_str());
+        }
+        None
     }
 
     /// Get the Python project's main dependencies.
-    pub fn dependencies(&self) -> &Vec<&str> {
-        todo!()
+    pub fn dependencies(&self) -> Option<&Vec<String>> {
+        if let Some(project) = self.project.as_ref() {
+            return project.dependencies.as_ref();
+        }
+        None
     }
 
     /// Get a group of optional dependencies from the Python project.
-    pub fn optional_dependencey_group(&self, group: &str) -> &Vec<&str> {
-        todo!()
+    pub fn optional_dependencey_group(&self, group_name: &str) -> Option<&Vec<String>> {
+        if let Some(project) = self.project.as_ref() {
+            if let Some(dependencies) = &project.optional_dependencies {
+                return dependencies.get(group_name);
+            }
+        }
+        None
     }
 
     /// Add a Python package as a dependency to the project.
     pub fn add_dependency(&mut self, package_str: &str) {
-        todo!()
+        self.project.as_mut().map(|project| {
+            if let Some(dependencies) = project.dependencies.as_mut() {
+                dependencies.push(package_str.to_string());
+            }
+        });
     }
 
     /// Add a Python package as a dependency to the project.
-    pub fn add_optional_dependency(&mut self, group: &str, package_str: &str) {
-        todo!()
+    pub fn add_optional_dependency(&mut self, package_str: &str, group_name: &str) {
+        self.project.as_mut().map(|project| {
+            if let Some(group) = project.optional_dependencies.as_mut() {
+                if let Some(dependencies) = group.get_mut(group_name) {
+                    dependencies.push(package_str.to_string());
+                };
+            }
+        });
     }
 
     /// Remove a dependency from the project.
-    pub fn remove_dependency(&mut self, package_name: &str) {
-        todo!()
+    pub fn remove_dependency(&mut self, package_str: &str) {
+        self.project.as_mut().map(|project| {
+            if let Some(dependencies) = project.dependencies.as_mut() {
+                if let Some(i) = dependencies
+                    .iter()
+                    .position(|item| item.contains(package_str))
+                {
+                    dependencies.remove(i);
+                };
+            }
+        });
     }
 
     /// Remove an optional dependency from the project.
-    pub fn remove_optional_dependency(&self, group: &str, package_name: &str) {
-        todo!()
+    pub fn remove_optional_dependency(&mut self, package_str: &str, group_name: &str) {
+        self.project.as_mut().map(|project| {
+            if let Some(group) = project.optional_dependencies.as_mut() {
+                if let Some(dependencies) = group.get_mut(group_name) {
+                    if let Some(i) = dependencies
+                        .iter()
+                        .position(|item| item.contains(package_str))
+                    {
+                        dependencies.remove(i);
+                    };
+                };
+            }
+        });
     }
 
     /// Get the scripts listed in the toml.
-    pub fn scripts(&self) -> HashMap<String, String, RandomState> {
-        todo!()
+    pub fn scripts(&self) -> Option<&HashMap<String, String, RandomState>> {
+        if let Some(project) = self.project.as_ref() {
+            return project.scripts.as_ref();
+        }
+        None
     }
 
     /// Save the toml contents to a filepath.
@@ -734,8 +803,9 @@ mod tests {
             .join("pyproject.toml");
         let ptoml = PyProjectToml::from_path(&path).unwrap();
 
-        assert_eq!(ptoml.project_name(), "mock_project");
-        assert_eq!(ptoml.project_version(), "0.0.1");
+        assert_eq!(ptoml.project_name().unwrap(), "mock_project");
+        assert_eq!(ptoml.project_version().unwrap(), "0.0.1");
+        assert!(ptoml.dependencies().is_some())
     }
 
     #[test]
@@ -749,6 +819,8 @@ mod tests {
 name = ""
 version = "0.0.1"
 description = ""
+
+[project.dependencies]
 
 [build-system]
 requires = ["hatchling"]
@@ -765,7 +837,7 @@ build-backend = "hatchling.build"
         let ptoml = PyProjectToml::from_path(path).unwrap();
 
         assert_eq!(
-            ptoml.dependencies().deref(),
+            ptoml.dependencies().unwrap().deref(),
             vec!["click==8.1.3", "black==22.8.0", "isort==5.12.0"]
         );
     }
@@ -778,7 +850,7 @@ build-backend = "hatchling.build"
         let ptoml = PyProjectToml::from_path(path).unwrap();
 
         assert_eq!(
-            ptoml.optional_dependencey_group("test").deref(),
+            ptoml.optional_dependencey_group("test").unwrap().deref(),
             vec!["pytest>=6", "mock"]
         );
     }

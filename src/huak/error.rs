@@ -77,9 +77,13 @@ pub enum HuakError {
     #[error("a problem with the test utility occurred: {0}")]
     TestingError(String),
     #[error("a problem with toml deserialization occurred: {0}")]
-    TOMLDeserializationError(#[from] toml_edit::de::Error),
+    TOMLDeserializationError(#[from] toml::de::Error),
     #[error("a problem with toml serialization occurred {0}")]
-    TOMLSerializationError(#[from] toml_edit::ser::Error),
+    TOMLSerializationError(#[from] toml::ser::Error),
+    #[error("a problem with toml deserialization occurred: {0}")]
+    TOMLEditDeserializationError(#[from] toml_edit::de::Error),
+    #[error("a problem with toml serialization occurred {0}")]
+    TOMLEditSerializationError(#[from] toml_edit::ser::Error),
     #[error("a problem with utf-8 parsing occurred: {0}")]
     UTF8Error(#[from] std::str::Utf8Error),
     #[error("{0}")]

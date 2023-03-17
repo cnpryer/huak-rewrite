@@ -402,14 +402,15 @@ mod tests {
         assert!(deps
             .iter()
             .all(|item| project.dependencies().unwrap().contains(item)));
-        assert!(deps
-            .iter()
-            .map(|item| item)
-            .all(|item| ser_toml.dependencies().contains(&item.dependency_str())));
+        assert!(deps.iter().map(|item| item).all(|item| ser_toml
+            .dependencies()
+            .unwrap()
+            .contains(&item.dependency_str().to_string())));
         assert!(deps.iter().map(|item| item).all(|item| project
             .pyproject_toml()
             .dependencies()
-            .contains(&item.dependency_str())));
+            .unwrap()
+            .contains(&item.dependency_str().to_string())));
     }
 
     #[test]
@@ -435,11 +436,13 @@ mod tests {
             .contains(item)));
         assert!(deps.iter().map(|item| item).all(|item| ser_toml
             .optional_dependencey_group("test")
-            .contains(&item.dependency_str())));
+            .unwrap()
+            .contains(&item.dependency_str().to_string())));
         assert!(deps.iter().map(|item| item).all(|item| project
             .pyproject_toml()
             .optional_dependencey_group("test")
-            .contains(&item.dependency_str())));
+            .unwrap()
+            .contains(&item.dependency_str().to_string())));
     }
 
     #[test]
@@ -606,7 +609,7 @@ def fn():
 def test_version():
     __version__
 "#,
-            project.pyproject_toml().project_name()
+            project.pyproject_toml().project_name().unwrap()
         );
         let init_file_filepath = project
             .root()
@@ -658,8 +661,8 @@ main()
                 .unwrap()
                 .scripts
                 .as_ref()
-                .unwrap()[ser_toml.project_name()],
-            format!("{}.main:main", ser_toml.project_name())
+                .unwrap()[ser_toml.project_name().unwrap()],
+            format!("{}.main:main", ser_toml.project_name().unwrap())
         );
         assert_eq!(main_file, expected_main_file);
 
@@ -686,7 +689,8 @@ main()
         let toml_had_black = project
             .pyproject_toml()
             .dependencies()
-            .contains(&black_package.dependency_str());
+            .unwrap()
+            .contains(&black_package.dependency_str().to_string());
 
         remove_project_dependencies(&config, &[black_package.name()]).unwrap();
 
@@ -696,7 +700,8 @@ main()
         let toml_has_black = project
             .pyproject_toml()
             .dependencies()
-            .contains(&black_package.dependency_str());
+            .unwrap()
+            .contains(&black_package.dependency_str().to_string());
         venv.install_package(&black_package).unwrap();
 
         assert!(venv_had_black);
@@ -719,7 +724,8 @@ main()
         let toml_had_pytest = project
             .pyproject_toml()
             .dependencies()
-            .contains(&pytest_package.dependency_str());
+            .unwrap()
+            .contains(&pytest_package.dependency_str().to_string());
 
         remove_project_optional_dependencies(&config, &[pytest_package.name()], "test").unwrap();
 
@@ -729,7 +735,8 @@ main()
         let toml_has_pytest = project
             .pyproject_toml()
             .dependencies()
-            .contains(&pytest_package.dependency_str());
+            .unwrap()
+            .contains(&pytest_package.dependency_str().to_string());
         venv.install_package(&pytest_package).unwrap();
 
         assert!(venv_had_pytest);
